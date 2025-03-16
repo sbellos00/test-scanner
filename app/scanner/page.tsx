@@ -7,14 +7,6 @@ import { useEffect, useRef } from 'react';
 import Script from 'next/script';
 import './styles.css';
 
-// Define A-Frame types directly in the file
-interface AFrameElement extends Element {
-  hasLoaded?: boolean;
-  systems?: {
-    [key: string]: any;
-  };
-}
-
 declare global {
   namespace JSX {
     interface IntrinsicElements {
