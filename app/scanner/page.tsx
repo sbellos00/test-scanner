@@ -162,7 +162,7 @@ export default function ScannerPage() {
         </video>
       </div>
       
-      <div ref={sceneContainerRef} id="scene-container"></div>
+      <div ref={sceneContainerRef} id="scene-container" className="ar-scene-container"></div>
     </>
   );
 } 
