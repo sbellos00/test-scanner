@@ -1,29 +1,18 @@
 import { NextResponse } from 'next/server';
+import { getActiveUrl } from '@/lib/kv';
 
-// This is a temporary implementation until the database 
-// integration is complete. In the future, this would 
-// fetch from a cached database value updated every 30 minutes.
+/**
+ * API endpoint to get the current active URL for a target
+ * Uses Vercel KV for fast access to active URLs
+ */
 export async function GET(request: Request) {
   try {
-    // Include the target parameter in URL
+    // Get target from query parameters
     const { searchParams } = new URL(request.url);
     const target = searchParams.get('target') || 'default';
     
-    // Simulate different URLs for different targets
-    // This will be replaced with actual database lookups
-    const targetUrls: Record<string, string> = {
-      'default': 'https://open.spotify.com/album/0hvT3yIEysuuvkK73vgdcW',
-      'onedollarbill': 'https://hyperspace.digital/one',
-      'twodollarbill': 'https://hyperspace.digital/two',
-      'fivedollarbill': 'https://hyperspace.digital/five',
-      'tendollarbill': 'https://hyperspace.digital/ten',
-      'twentydollarbill': 'https://hyperspace.digital/twenty',
-      'fiftydollarbill': 'https://hyperspace.digital/fifty',
-      'hundreddollarbill': 'https://hyperspace.digital/hundred'
-    };
-
-    // Get the active URL for the target
-    const activeUrl = targetUrls[target] || targetUrls['default'];
+    // Get the active URL from KV store
+    const activeUrl = await getActiveUrl(target);
     
     // Return the URL with CORS headers
     return NextResponse.json(

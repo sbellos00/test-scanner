@@ -1,0 +1,88 @@
+# HyperSpace Scanner Project Specifications
+
+## Project Overview
+HyperSpace Scanner is an AR-based image-recognition system acting as an innovative alternative to QR codes, enabling dynamic, scheduled redirection based on image scans.
+
+## Technology Stack
+
+### Front-end (Scanner App)
+- **Framework:** Next.js (App Router) hosted on Vercel
+- **Language:** TypeScript (for type safety)
+- **AR Library:** MindAR.js
+- **Styling:** Tailwind CSS
+- **Component Library:** Shadcn UI for consistent UI components
+
+### Backend (Admin and API)
+- **Framework:** Next.js Serverless API routes hosted on Vercel
+- **Database/Caching:** Vercel KV (scheduled updates)
+- **Scheduled Tasks:** Scheduled (cron-like) serverless functions via Vercel
+
+## Functionality
+
+### Scanner App
+- Uses MindAR.js for image recognition.
+- Upon detecting an image (`targetFound` event), fetches the current link via API and immediately redirects users.
+
+### Admin Dashboard
+- Allows creating, editing, deleting, and viewing schedules for links.
+- Interface built with Next.js and Tailwind CSS.
+- Stores schedules in a persistent database (Vercel KV or Supabase).
+- A scheduled cron function updates the current link every 30 minutes to ensure consistent API responses.
+
+### Serverless API and Caching Strategy
+- API endpoint (`/api/current-program`) reads the cached current link from Vercel KV (updated by the scheduled function).
+- The scheduled function queries the database every 30 minutes and updates the KV cache.
+
+## Coding Standards and Practices
+
+### General Approach
+- Approach tasks with a senior developer mindset: scalability, maintainability, and readability.
+- Prioritize simple, clear, and efficient code.
+- Challenge assumptions and seek the best, simplest solution.
+- Write DRY (Don't Repeat Yourself) code.
+
+### Next.js and React
+- Use Next.js App Router structure (the `app/` folder).
+- Always use server components for data fetching where possible.
+- Minimize client-side logic to essential interactions (such as the scanner redirect).
+- Dynamically import MindAR or heavy components to optimize performance.
+
+### Syntax and Formatting
+- Use descriptive variable names (e.g., `isLoading`, `hasError`).
+- Prefer interfaces over types (e.g., `interface Props {}`).
+- Utilize named exports (e.g., `export { Component }`).
+- Use dynamic imports (e.g., `dynamic(() => import())`) for heavy client-side dependencies.
+
+### Error Handling
+- Implement proper error boundaries and fallback UI.
+- Include detailed logging and clear error messages.
+- Always handle API errors gracefully on both the frontend and backend.
+
+### Security
+- Do not expose sensitive or future scheduling data to the client.
+- API endpoints should only return the currently active URL, preventing unauthorized access to scheduled links.
+- Ensure server-side validation for any admin-related actions.
+
+### Performance
+- Ensure minimal API payloads.
+- Implement caching (Vercel KV) to minimize database lookups.
+- Utilize scheduled cache updates to maintain performance and cost-efficiency.
+
+### Hosting & Deployment
+- Host both the frontend and backend on Vercel.
+- Utilize Vercel serverless API endpoints and scheduled functions for backend logic.
+- Regularly monitor usage and costs to maintain efficiency and adjust if necessary.
+
+### Additional Security Considerations
+- Do not expose sensitive data through client-side code.
+- Implement strict access controls for the admin dashboard.
+
+### Error Handling & Debugging
+- Use clear error boundaries and fallback UIs.
+- Include meaningful logging to facilitate debugging.
+- Document known issues and planned solutions clearly.
+
+### Documentation & Comments
+- Comment code for clarity, especially for complex logic.
+- Avoid unnecessary or redundant comments.
+- Use JSDoc-style comments to document functions and API endpoints clearly.
