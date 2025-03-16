@@ -2,16 +2,10 @@
 /* eslint-disable @typescript-eslint/no-namespace */
 "use client";
 
-import dynamic from 'next/dynamic';
-import { useEffect, useState } from 'react';
-import { fetchActiveUrl } from '@/lib/api';
+import { useEffect, useRef, useState } from 'react';
+import Script from 'next/script';
 import '@/scanner-files/styles.css';
-
-// Dynamically import the AFrameScene component with no SSR
-const DynamicAFrameScene = dynamic(
-  () => import('../../components/AFrameScene'),
-  { ssr: false }
-);
+import { fetchActiveUrl } from '@/lib/api';
 
 declare global {
   namespace JSX {
@@ -31,10 +25,9 @@ declare global {
 }
 
 export default function NewScannerPage() {
-  const [arSystem, setARSystem] = useState<any>(null);
-  const [isScanning, setIsScanning] = useState(false);
+  const sceneContainerRef = useRef<HTMLDivElement>(null);
   const [isLoading, setIsLoading] = useState(false);
-
+  
   // Wrapper function to handle loading state
   const handleTargetFound = async (target: string) => {
     setIsLoading(true);
@@ -48,62 +41,84 @@ export default function NewScannerPage() {
       setIsLoading(false);
     }
   };
-
-  // Define custom targets and their behaviors
-  const customTargets = [
-    {
-      id: 'hyperspace-labs',
-      index: 0,
-      onTargetFound: () => handleTargetFound('hyperspace-labs')
-    },
-    {
-      id: 'calendar-plaisio',
-      index: 1,
-      onTargetFound: () => handleTargetFound('calendar-plaisio')
-    },
-    {
-      id: 'mamba-mentality',
-      index: 2,
-      onTargetFound: () => handleTargetFound('mamba-mentality')
-    }
-  ];
-
-  const handleSceneLoaded = (system: any) => {
-    setARSystem(system);
-  };
-
-  const startScanning = () => {
-    if (arSystem) {
-      arSystem.start();
-      setIsScanning(true);
-    }
-  };
-
-  const stopScanning = () => {
-    if (arSystem) {
-      arSystem.stop();
-      setIsScanning(false);
-    }
-  };
-
-  // Clean up on unmount
+  
   useEffect(() => {
-    return () => {
-      if (arSystem) {
-        arSystem.stop();
+    // This code runs after the component mounts and all scripts load
+    if (typeof window !== 'undefined') {
+      // Inject A-Frame HTML
+      if (sceneContainerRef.current) {
+        const aframeHTML = `
+          <a-scene
+            mindar-image="imageTargetSrc: /targets.mind; uiLoading:#loadingAnimation; uiScanning:#scannerAnimation; autoStart: true"
+            color-space="sRGB" 
+            renderer="colorManagement: true, physicallyCorrectLights" 
+            vr-mode-ui="enabled: false"
+            device-orientation-permission-ui="enabled: false"
+          >
+            <a-assets>
+              <a-asset-item 
+                id="avatarModel"
+                src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/image-tracking/assets/card-example/softmind/scene.gltf"
+              ></a-asset-item>
+            </a-assets>
+            
+            <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+            
+            <a-entity id="hyperspace-labs" mindar-image-target="targetIndex: 0"></a-entity>
+            <a-entity id="calendar-plaisio" mindar-image-target="targetIndex: 1"></a-entity>
+            <a-entity id="mamba-mentality" mindar-image-target="targetIndex: 2"></a-entity>
+          </a-scene>
+        `;
+        
+        sceneContainerRef.current.innerHTML = aframeHTML;
       }
-    };
-  }, [arSystem]);
-
-  // Auto-start scanning on component mount
-  useEffect(() => {
-    if (arSystem) {
-      startScanning();
+      
+      // Wait for a short delay to ensure scene is initialized
+      const initTimeout = setTimeout(() => {
+        // Setup target event listeners
+        const targets = [
+          'hyperspace-labs', 'calendar-plaisio', 'mamba-mentality'
+        ];
+        
+        targets.forEach(target => {
+          const element = document.querySelector(`#${target}`);
+          if (element) {
+            element.addEventListener("targetFound", () => {
+              handleTargetFound(target);
+            });
+          }
+        });
+        
+        // Attempt to play videos for animations
+        const attemptPlay = (video: HTMLVideoElement) => {
+          if (!video) return;
+          
+          const playPromise = video.play();
+          if (playPromise !== undefined) {
+            playPromise.then(() => {
+              // Autoplay started
+            }).catch(error => {
+              console.warn('Autoplay was prevented. Attempting to play the video manually.', error);
+            });
+          }
+        };
+        
+        const enterUtopiaVideo = document.getElementById('enterUtopiaVideo') as HTMLVideoElement;
+        const portalScannerVideo = document.getElementById('portalScannerVideo') as HTMLVideoElement;
+        
+        if (enterUtopiaVideo) attemptPlay(enterUtopiaVideo);
+        if (portalScannerVideo) attemptPlay(portalScannerVideo);
+      }, 1000);
+      
+      return () => clearTimeout(initTimeout);
     }
-  }, [arSystem]);
-
+  }, []);
+  
   return (
-    <div className="scanner-page">
+    <>
+      <Script src="https://aframe.io/releases/1.6.0/aframe.min.js" strategy="beforeInteractive" />
+      <Script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js" strategy="beforeInteractive" />
+      
       <div id="loadingAnimation" className="animation-container">
         <video id="enterUtopiaVideo" autoPlay muted loop playsInline>
           <source src="/gnxscannerloadingscreen.mp4" type="video/mp4" />
@@ -122,31 +137,7 @@ export default function NewScannerPage() {
         </div>
       )}
       
-      <div className="scanner-container">
-        <DynamicAFrameScene 
-          onSceneLoaded={handleSceneLoaded}
-          mindFilePath="/targets.mind" 
-          targets={customTargets}
-        />
-        
-        <div className="scanner-controls mt-4">
-          {!isScanning ? (
-            <button 
-              onClick={startScanning}
-              className="scan-button"
-            >
-              Start Scanning
-            </button>
-          ) : (
-            <button 
-              onClick={stopScanning}
-              className="stop-button"
-            >
-              Stop Scanning
-            </button>
-          )}
-        </div>
-      </div>
-    </div>
+      <div ref={sceneContainerRef} id="scene-container" className="ar-scene-container"></div>
+    </>
   );
 } 
