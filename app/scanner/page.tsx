@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-namespace */
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useEffect, useRef } from 'react';
