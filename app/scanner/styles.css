@@ -219,4 +219,10 @@ body {
   to {
     transform: rotate(360deg);
   }
+}
+
+/* Fix for AR camera positioning */
+a-scene video {
+  top: 0 !important;
+  position: absolute !important;
 } 
