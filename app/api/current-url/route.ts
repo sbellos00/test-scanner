@@ -20,8 +20,7 @@ export async function GET(request: Request) {
       { 
         headers: {
           'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'GET',
-          'Cache-Control': 'max-age=60' // Cache for 1 minute
+          'Access-Control-Allow-Methods': 'GET'
         }
       }
     );
