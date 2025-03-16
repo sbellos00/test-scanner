@@ -13,12 +13,12 @@ export default function Home() {
           priority
         />
         
-        <Link 
+        <a 
           href="/scanner" 
           className="px-8 py-2 text-4xl bg-[#a701b8] rounded-lg hover:bg-[#8a0198] transition-colors duration-300 font-['Times_New_Roman',serif]"
         >
           enter
-        </Link>
+        </a>
         
         <div className="w-full flex justify-between mt-12">
           <div className="text-sm">HyperSpace Labs</div>
