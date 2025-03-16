@@ -1,11 +1,23 @@
 import { Redis } from '@upstash/redis';
+import * as dotenv from 'dotenv';
+
+// Load environment variables
+dotenv.config({ path: '.env.local' });
 
 /**
  * Upstash Redis utilities for HyperSpace Scanner
  */
 
-// Initialize Redis from environment variables
-const redis = Redis.fromEnv();
+// Debug environment variables
+if (!process.env.KV_REST_API_URL || !process.env.KV_REST_API_TOKEN) {
+  console.warn('[Upstash Redis] Environment variables missing. URL or token not found.');
+}
+
+// Initialize Redis from explicit environment variables
+const redis = new Redis({
+  url: process.env.KV_REST_API_URL || '',
+  token: process.env.KV_REST_API_TOKEN || '',
+});
 
 /**
  * Get the active URL for a target from Redis

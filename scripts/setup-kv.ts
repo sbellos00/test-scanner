@@ -4,6 +4,10 @@
  */
 
 import { setActiveUrl } from '../lib/kv';
+import * as dotenv from 'dotenv';
+
+// Load environment variables from .env.local
+dotenv.config({ path: '.env.local' });
 
 const INITIAL_URLS = {
   'default': 'https://open.spotify.com/album/0hvT3yIEysuuvkK73vgdcW',
