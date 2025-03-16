@@ -222,7 +222,8 @@ body {
 }
 
 /* Fix for AR camera positioning */
-a-scene video {
+#scene-container video {
   top: 0 !important;
   position: absolute !important;
+  height: 100% !important; /* Ensure the video fills the height */
 } 
