@@ -33,7 +33,6 @@ declare global {
 }
 
 export default function ScannerPage() {
-  const startButtonRef = useRef<HTMLButtonElement>(null);
   const sceneContainerRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
@@ -43,7 +42,7 @@ export default function ScannerPage() {
       if (sceneContainerRef.current) {
         const aframeHTML = `
           <a-scene
-            mindar-image="imageTargetSrc: /dollah.mind; uiLoading:#loadingAnimation; uiScanning:#scannerAnimation; autoStart: false"
+            mindar-image="imageTargetSrc: /dollah.mind; uiLoading:#loadingAnimation; uiScanning:#scannerAnimation; autoStart: true"
             color-space="sRGB" 
             renderer="colorManagement: true, physicallyCorrectLights" 
             vr-mode-ui="enabled: false"
@@ -73,30 +72,6 @@ export default function ScannerPage() {
       
       // Wait for a short delay to ensure scene is initialized
       const initTimeout = setTimeout(() => {
-        // Get the AR system once the scene is loaded
-        const sceneEl = document.querySelector('a-scene') as AFrameElement;
-        if (!sceneEl) return;
-        
-        let arSystem: any;
-        
-        if (sceneEl.hasLoaded) {
-          arSystem = sceneEl.systems && sceneEl.systems["mindar-image-system"];
-        } else {
-          sceneEl.addEventListener('loaded', function () {
-            arSystem = sceneEl.systems && sceneEl.systems["mindar-image-system"];
-          });
-        }
-        
-        // Start AR when the button is tapped
-        const startButton = startButtonRef.current;
-        if (startButton) {
-          startButton.addEventListener('click', () => {
-            if (arSystem) arSystem.start();
-            const menu = document.getElementById('menu');
-            if (menu) menu.classList.add('hidden');
-          });
-        }
-        
         // Setup target event listeners
         const targets = [
           'onedollarbill', 'twodollarbill', 'fivedollarbill', 
@@ -113,7 +88,7 @@ export default function ScannerPage() {
           }
         });
         
-        // Attempt to play videos
+        // Attempt to play videos for animations
         const attemptPlay = (video: HTMLVideoElement) => {
           if (!video) return;
           
@@ -142,13 +117,6 @@ export default function ScannerPage() {
     <>
       <Script src="https://aframe.io/releases/1.6.0/aframe.min.js" strategy="beforeInteractive" />
       <Script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js" strategy="beforeInteractive" />
-      
-      <div id="menu">
-        <img id="menuLogo" src="/EtsiEinaiHFash.png" alt="Utopia Logo" />
-        <button id="startButton" ref={startButtonRef}>enter</button>
-        <div className="corner-text left">HyperSpace Labs</div>
-        <div className="corner-text right">Experiment #0</div>
-      </div>
       
       <div id="loadingAnimation" className="animation-container">
         <video id="enterUtopiaVideo" autoPlay muted loop playsInline>
