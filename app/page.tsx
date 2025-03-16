@@ -12,12 +12,21 @@ export default function Home() {
           priority
         />
         
-        <a 
-          href="/scanner" 
-          className="px-8 py-2 text-4xl bg-[#a701b8] rounded-lg hover:bg-[#8a0198] transition-colors duration-300 font-['Times_New_Roman',serif]"
-        >
-          enter
-        </a>
+        <div className="flex gap-4">
+          <a 
+            href="/scanner" 
+            className="px-8 py-2 text-4xl bg-[#a701b8] rounded-lg hover:bg-[#8a0198] transition-colors duration-300 font-['Times_New_Roman',serif]"
+          >
+            enter
+          </a>
+          
+          <a 
+            href="/tv-beta" 
+            className="px-8 py-2 text-4xl bg-[#a701b8] rounded-lg hover:bg-[#8a0198] transition-colors duration-300 font-['Times_New_Roman',serif]"
+          >
+            tv-beta
+          </a>
+        </div>
         
         <div className="w-full flex justify-between mt-12">
           <div className="text-sm">HyperSpace Labs</div>
