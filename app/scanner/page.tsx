@@ -2,7 +2,6 @@
 /* eslint-disable @typescript-eslint/no-namespace */
 "use client";
 
-import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { useEffect, useState } from 'react';
 import { fetchActiveUrl } from '@/lib/api';
@@ -31,7 +30,6 @@ declare global {
 }
 
 export default function ScannerPage() {
-  const router = useRouter();
   const [arSystem, setARSystem] = useState<any>(null);
   const [isScanning, setIsScanning] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
