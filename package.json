@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@radix-ui/react-slot": "^1.1.2",
     "@upstash/redis": "^1.34.5",
     "@vercel/kv": "^3.0.0",
     "class-variance-authority": "^0.7.1",

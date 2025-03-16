@@ -7,6 +7,7 @@ import dynamic from 'next/dynamic';
 import { useEffect, useState } from 'react';
 import { fetchActiveUrl } from '@/lib/api';
 import '@/scanner-files/styles.css';
+
 // Dynamically import the AFrameScene component with no SSR
 const DynamicAFrameScene = dynamic(
   () => import('../../components/AFrameScene'),
@@ -30,7 +31,7 @@ declare global {
   }
 }
 
-export default function ScannerPage() {
+export default function NewScannerPage() {
   const router = useRouter();
   const [arSystem, setARSystem] = useState<any>(null);
   const [isScanning, setIsScanning] = useState(false);
@@ -50,42 +51,22 @@ export default function ScannerPage() {
     }
   };
 
-  // Define dollar bill targets and their behaviors
-  const dollarBillTargets = [
+  // Define custom targets and their behaviors
+  const customTargets = [
     {
-      id: 'onedollarbill',
+      id: 'hyperspace-labs',
       index: 0,
-      onTargetFound: () => handleTargetFound('onedollarbill')
+      onTargetFound: () => handleTargetFound('hyperspace-labs')
     },
     {
-      id: 'twodollarbill',
+      id: 'calendar-plaisio',
       index: 1,
-      onTargetFound: () => handleTargetFound('twodollarbill')
+      onTargetFound: () => handleTargetFound('calendar-plaisio')
     },
     {
-      id: 'fivedollarbill',
+      id: 'mamba-mentality',
       index: 2,
-      onTargetFound: () => handleTargetFound('fivedollarbill')
-    },
-    {
-      id: 'tendollarbill',
-      index: 3,
-      onTargetFound: () => handleTargetFound('tendollarbill')
-    },
-    {
-      id: 'twentydollarbill',
-      index: 4,
-      onTargetFound: () => handleTargetFound('twentydollarbill')
-    },
-    {
-      id: 'fiftydollarbill',
-      index: 5,
-      onTargetFound: () => handleTargetFound('fiftydollarbill')
-    },
-    {
-      id: 'hundreddollarbill',
-      index: 6,
-      onTargetFound: () => handleTargetFound('hundreddollarbill')
+      onTargetFound: () => handleTargetFound('mamba-mentality')
     }
   ];
 
@@ -146,8 +127,8 @@ export default function ScannerPage() {
       <div className="scanner-container">
         <DynamicAFrameScene 
           onSceneLoaded={handleSceneLoaded}
-          mindFilePath="/dollah.mind" 
-          targets={dollarBillTargets}
+          mindFilePath="/targets.mind" 
+          targets={customTargets}
         />
         
         <div className="scanner-controls mt-4">

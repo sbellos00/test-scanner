@@ -6,6 +6,12 @@ import { useEffect, useRef, useState } from 'react';
 
 interface AFrameSceneProps {
   onSceneLoaded: (system: any) => void;
+  mindFilePath: string;
+  targets: {
+    id: string;
+    index: number;
+    onTargetFound?: () => void;
+  }[];
 }
 
 declare global {
@@ -15,7 +21,7 @@ declare global {
   }
 }
 
-export default function AFrameScene({ onSceneLoaded }: AFrameSceneProps) {
+export default function AFrameScene({ onSceneLoaded, mindFilePath, targets }: AFrameSceneProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isAFrameReady, setIsAFrameReady] = useState(false);
   const [isMindARReady, setIsMindARReady] = useState(false);
@@ -72,7 +78,7 @@ export default function AFrameScene({ onSceneLoaded }: AFrameSceneProps) {
     try {
       // Create A-Frame scene element
       const sceneEl = document.createElement('a-scene');
-      sceneEl.setAttribute('mindar-image', 'imageTargetSrc: /dollah.mind; uiLoading:#loadingAnimation; uiScanning:#scannerAnimation; autoStart: false');
+      sceneEl.setAttribute('mindar-image', `imageTargetSrc: ${mindFilePath}; uiLoading:#loadingAnimation; uiScanning:#scannerAnimation; autoStart: false`);
       sceneEl.setAttribute('color-space', 'sRGB');
       sceneEl.setAttribute('renderer', 'colorManagement: true, physicallyCorrectLights');
       sceneEl.setAttribute('vr-mode-ui', 'enabled: false');
@@ -93,20 +99,16 @@ export default function AFrameScene({ onSceneLoaded }: AFrameSceneProps) {
       sceneEl.appendChild(camera);
 
       // Create entities for targets
-      const targets = [
-        'onedollarbill', 'twodollarbill', 'fivedollarbill', 
-        'tendollarbill', 'twentydollarbill', 'fiftydollarbill', 
-        'hundreddollarbill'
-      ];
-      
-      targets.forEach((target, index) => {
+      targets.forEach((target) => {
         const entity = document.createElement('a-entity');
-        entity.id = target;
-        entity.setAttribute('mindar-image-target', `targetIndex: ${index}`);
+        entity.id = target.id;
+        entity.setAttribute('mindar-image-target', `targetIndex: ${target.index}`);
         
         // Add event listener for target found
         entity.addEventListener('targetFound', () => {
-          window.location.href = "https://open.spotify.com/album/0hvT3yIEysuuvkK73vgdcW";
+          if (target.onTargetFound) {
+            target.onTargetFound();
+          }
         });
         
         sceneEl.appendChild(entity);
@@ -144,7 +146,7 @@ export default function AFrameScene({ onSceneLoaded }: AFrameSceneProps) {
         containerRef.current.innerHTML = '';
       }
     };
-  }, [isAFrameReady, isMindARReady, onSceneLoaded]);
+  }, [isAFrameReady, isMindARReady, onSceneLoaded, mindFilePath, targets]);
 
   return (
     <div>
