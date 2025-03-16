@@ -2,9 +2,10 @@
 /* eslint-disable @typescript-eslint/no-namespace */
 "use client";
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Script from 'next/script';
 import './styles.css';
+import { fetchActiveUrl } from '@/lib/api';
 
 declare global {
   namespace JSX {
@@ -25,6 +26,21 @@ declare global {
 
 export default function ScannerPage() {
   const sceneContainerRef = useRef<HTMLDivElement>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  
+  // Wrapper function to handle loading state
+  const handleTargetFound = async (target: string) => {
+    setIsLoading(true);
+    try {
+      const activeUrl = await fetchActiveUrl(target);
+      window.location.href = activeUrl;
+    } catch (error) {
+      console.error('Error handling target found:', error);
+      window.location.href = 'https://hyperspace.digital/error';
+    } finally {
+      setIsLoading(false);
+    }
+  };
   
   useEffect(() => {
     // This code runs after the component mounts and all scripts load
@@ -74,7 +90,7 @@ export default function ScannerPage() {
           const element = document.querySelector(`#${target}`);
           if (element) {
             element.addEventListener("targetFound", () => {
-              window.location.href = "https://open.spotify.com/album/0hvT3yIEysuuvkK73vgdcW";
+              handleTargetFound(target);
             });
           }
         });
@@ -120,6 +136,12 @@ export default function ScannerPage() {
           <source src="/portalScanner.mp4" type="video/mp4" />
         </video>
       </div>
+      
+      {isLoading && (
+        <div className="fixed top-0 left-0 w-full h-full flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="text-white">Redirecting...</div>
+        </div>
+      )}
       
       <div ref={sceneContainerRef} id="scene-container" className="ar-scene-container"></div>
     </>
