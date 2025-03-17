@@ -2,6 +2,29 @@ import { NextResponse } from 'next/server';
 import { getActiveUrl } from '@/lib/kv';
 
 /**
+ * Target to channel mapping
+ * Maps physical targets to content channels
+ */
+const targetToChannelMap: Record<string, string> = {
+  // Scanner app targets (dollar bills)
+  'onedollarbill': 'channel-one-dollar',
+  'twodollarbill': 'channel-two-dollar',
+  'fivedollarbill': 'channel-five-dollar',
+  'tendollarbill': 'channel-ten-dollar',
+  'twentydollarbill': 'channel-twenty-dollar',
+  'fiftydollarbill': 'channel-fifty-dollar',
+  'hundreddollarbill': 'channel-hundred-dollar',
+  
+  // TV Beta targets
+  'hyperspace-labs': 'channel-hyperspace-labs',
+  'calendar-plaisio': 'channel-calendar',
+  'mamba-mentality': 'channel-mamba',
+  
+  // Default fallback
+  'default': 'default-channel'
+};
+
+/**
  * API endpoint to get the current active URL for a target
  * Uses Vercel KV for fast access to active URLs
  */
@@ -11,8 +34,11 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const target = searchParams.get('target') || 'default';
     
-    // Get the active URL from KV store
-    const activeUrl = await getActiveUrl(target);
+    // Map target to channel
+    const channel = targetToChannelMap[target] || 'default-channel';
+    
+    // Get the active URL from KV store using the channel as identifier
+    const activeUrl = await getActiveUrl(channel);
     
     // Return the URL with CORS headers
     return NextResponse.json(
