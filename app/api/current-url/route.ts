@@ -16,9 +16,9 @@ const targetToChannelMap: Record<string, string> = {
   'hundreddollarbill': 'channel-hundred-dollar',
   
   // TV Beta targets
-  'hyperspace-labs': 'channel-hyperspace-labs',
-  'calendar-plaisio': 'channel-calendar',
-  'mamba-mentality': 'channel-mamba',
+  'hyperspace-labs': 'hyperspace-channel',
+  'calendar-plaisio': 'music-channel',
+  'mamba-mentality': 'motivation-channel',
   
   // Default fallback
   'default': 'default-channel'
