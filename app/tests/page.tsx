@@ -49,7 +49,7 @@ export default function NewScannerPage() {
       if (sceneContainerRef.current) {
         const aframeHTML = `
           <a-scene
-            mindar-image="imageTargetSrc: /tests.mind; uiLoading:#loadingAnimation; uiScanning:#scannerAnimation; autoStart: true"
+            mindar-image="imageTargetSrc: /MindARMusicXYoutube.mind; uiLoading:#loadingAnimation; uiScanning:#scannerAnimation; autoStart: true"
             color-space="sRGB" 
             renderer="colorManagement: true, physicallyCorrectLights" 
             vr-mode-ui="enabled: false"
@@ -64,9 +64,13 @@ export default function NewScannerPage() {
             
             <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
             
-            <a-entity id="spotify-mobile" mindar-image-target="targetIndex: 0"></a-entity>
-            <a-entity id="yt-video-speed" mindar-image-target="targetIndex: 1"></a-entity>
-            <a-entity id="spotify-desktop" mindar-image-target="targetIndex: 2"></a-entity>
+            <a-entity id="anxiety-bar-and-song-title" mindar-image-target="targetIndex: 0"></a-entity>
+            <a-entity id="meetyourpadre-only-bar-end" mindar-image-target="targetIndex: 1"></a-entity>
+            <a-entity id="ishowspeed-clear" mindar-image-target="targetIndex: 2"></a-entity>
+            <a-entity id="ishowspeed-paused-with-bar" mindar-image-target="targetIndex: 3"></a-entity>
+            <a-entity id="ultralightbeam-full" mindar-image-target="targetIndex: 4"></a-entity>
+            <a-entity id="walk-with-me-ultralightbeam-full" mindar-image-target="targetIndex: 5"></a-entity>
+
           </a-scene>
         `;
         

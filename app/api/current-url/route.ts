@@ -21,9 +21,13 @@ const targetToChannelMap: Record<string, string> = {
   'mamba-mentality': 'motivation-channel',
 
   // Tests for realtime playback
-  'spotify-mobile': 'hyperspace-channel',
-  'yt-video-speed': 'music-channel',
-  'spotify-desktop': 'motivation-channel',
+  'anxiety-bar-and-song-title': 'test1-channel',
+  'meetyourpadre-only-bar-end': 'test2-channel',
+  'ishowspeed-clear': 'test3-channel',
+  'ishowspeed-paused-with-bar': 'test4-channel',
+  'ultralightbeam-full': 'test5-channel',
+  'walk-with-me-ultralightbeam-full': 'test6-channel',
+
   
   // Default fallback
   'default': 'default-channel'
