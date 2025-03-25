@@ -19,6 +19,11 @@ const targetToChannelMap: Record<string, string> = {
   'hyperspace-labs': 'hyperspace-channel',
   'calendar-plaisio': 'music-channel',
   'mamba-mentality': 'motivation-channel',
+
+  // Tests for realtime playback
+  'spotify-mobile': 'hyperspace-channel',
+  'yt-video-speed': 'music-channel',
+  'spotify-desktop': 'motivation-channel',
   
   // Default fallback
   'default': 'default-channel'

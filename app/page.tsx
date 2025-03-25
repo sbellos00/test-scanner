@@ -14,10 +14,10 @@ export default function Home() {
         
         <div className="flex gap-4">
           <a 
-            href="/scanner" 
+            href="/tests" 
             className="px-8 py-2 text-4xl bg-[#a701b8] rounded-lg hover:bg-[#8a0198] transition-colors duration-300 font-['Times_New_Roman',serif]"
           >
-            enter
+            tests
           </a>
           
           <a 
