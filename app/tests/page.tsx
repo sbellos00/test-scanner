@@ -81,7 +81,7 @@ export default function NewScannerPage() {
       const initTimeout = setTimeout(() => {
         // Setup target event listeners
         const targets = [
-          'hyperspace-labs', 'calendar-plaisio', 'mamba-mentality'
+          'anxiety-bar-and-song-title', 'meetyourpadre-only-bar-end', 'ishowspeed-clear', 'ishowspeed-paused-with-bar', 'ultralightbeam-full', 'walk-with-me-ultralightbeam-full'
         ];
         
         targets.forEach(target => {
