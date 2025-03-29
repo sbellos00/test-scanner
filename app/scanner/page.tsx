@@ -28,17 +28,52 @@ export default function ScannerPage() {
   const sceneContainerRef = useRef<HTMLDivElement>(null);
   const [isLoading, setIsLoading] = useState(false);
   
+  // Function to play intro video when provided
+  const playIntroVideo = (videoUrl: string): Promise<void> => {
+    return new Promise((resolve) => {
+      // Create modal container
+      const modal = document.createElement('div');
+      modal.className = 'fixed top-0 left-0 w-full h-full flex items-center justify-center bg-black z-50';
+      
+      // Create video element
+      const video = document.createElement('video');
+      video.className = 'w-full h-full object-contain'; // Full screen with proper aspect ratio
+      video.src = videoUrl;
+      video.controls = false;
+      video.autoplay = true;
+      video.playsInline = true; // Important for mobile
+
+      // When video ends, resolve the promise
+      video.onended = () => {
+        document.body.removeChild(modal);
+        resolve();
+      };
+
+      // Add elements to DOM
+      modal.appendChild(video);
+      document.body.appendChild(modal);
+    });
+  };
+  
   // Wrapper function to handle loading state
   const handleTargetFound = async (target: string) => {
     setIsLoading(true);
     try {
-      const activeUrl = await fetchActiveUrl(target);
-      window.location.href = activeUrl;
+      const urlData = await fetchActiveUrl(target);
+
+      // If intro video exists, hide loading overlay first, then play intro
+      if (urlData.introVideo) {
+        setIsLoading(false); // Hide loading overlay before playing intro video
+        await playIntroVideo(urlData.introVideo);
+      }
+
+      // Redirect to the main URL
+      window.location.href = urlData.url;
     } catch (error) {
       console.error('Error handling target found:', error);
       window.location.href = 'https://hyperspace.digital/error';
     } finally {
-      setIsLoading(false);
+      setIsLoading(false); // Ensure loading is always turned off in case of errors
     }
   };
   
