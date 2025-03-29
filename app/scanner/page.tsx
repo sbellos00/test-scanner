@@ -59,10 +59,7 @@ export default function ScannerPage() {
         if (playPromise !== undefined) {
           playPromise.then(() => {
             console.log('Intro video started playing');
-            // Unmute after successful play start (if browser allows)
-            setTimeout(() => {
-              video.muted = false;
-            }, 500);
+            // Keep video muted throughout playback
           }).catch(error => {
             console.warn('Autoplay was prevented:', error);
             // Retry after a short delay
