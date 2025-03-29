@@ -3,10 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "ts-node scripts/exportMappings.ts && next dev --turbopack",
-    "build": "ts-node scripts/exportMappings.ts && next build",
+    "dev": "next dev --turbopack",
+    "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "export-mappings": "tsx scripts/exportMappings.ts"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.1.2",
@@ -36,5 +37,6 @@
     "ts-node": "^10.9.2",
     "tsx": "^4.19.3",
     "typescript": "^5"
-  }
+  },
+  "type": "module"
 }

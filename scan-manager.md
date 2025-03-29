@@ -1,5 +1,5 @@
 We will manage the scan connections through the sql GUI
-We run the GUI, make changes, we then run npm run dev and test the changes. Or we run npm run build. These automatically update the json mappings.
+We run the GUI, make changes, we then run npm run export-mappings. Test the mappings and then use npm run build, ensure all it's good, and then move on.
 We commit and push to github which will redeploy the scanner with the updated connections.
 
 
