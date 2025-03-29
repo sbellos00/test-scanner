@@ -40,9 +40,9 @@ export default function ScannerPage() {
       video.className = 'w-full h-full object-contain'; // Full screen with proper aspect ratio
       video.src = videoUrl;
       video.controls = false;
-      video.autoplay = true;
+      video.muted = true; // Start muted to help with autoplay
       video.playsInline = true; // Important for mobile
-
+      
       // When video ends, resolve the promise
       video.onended = () => {
         document.body.removeChild(modal);
@@ -52,6 +52,26 @@ export default function ScannerPage() {
       // Add elements to DOM
       modal.appendChild(video);
       document.body.appendChild(modal);
+      
+      // Force play with retry mechanism
+      const playVideo = () => {
+        const playPromise = video.play();
+        if (playPromise !== undefined) {
+          playPromise.then(() => {
+            console.log('Intro video started playing');
+            // Unmute after successful play start (if browser allows)
+            setTimeout(() => {
+              video.muted = false;
+            }, 500);
+          }).catch(error => {
+            console.warn('Autoplay was prevented:', error);
+            // Retry after a short delay
+            setTimeout(playVideo, 1000);
+          });
+        }
+      };
+      
+      playVideo();
     });
   };
   
@@ -97,7 +117,7 @@ export default function ScannerPage() {
               ></a-asset-item>
             </a-assets>
             
-            <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+            <a-camera position="0 0 0" look-controls="enabled: false" exposure="1.2" auto-exposure="true"></a-camera>
             
             <a-entity id="onedollarbill" mindar-image-target="targetIndex: 0"></a-entity>
             <a-entity id="twodollarbill" mindar-image-target="targetIndex: 1"></a-entity>
@@ -174,7 +194,7 @@ export default function ScannerPage() {
       
       {isLoading && (
         <div className="fixed top-0 left-0 w-full h-full flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="text-white">Redirecting...</div>
+          <img src="/ONtinosOMitoglou.png" alt="Loading" className="max-w-full max-h-full" />
         </div>
       )}
       
