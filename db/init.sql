@@ -1,0 +1,23 @@
+CREATE TABLE target_mappings (
+  target TEXT PRIMARY KEY,
+  channel TEXT NOT NULL
+);
+
+INSERT INTO target_mappings (target, channel) VALUES
+  ('onedollarbill', 'channel-one-dollar'),
+  ('twodollarbill', 'channel-two-dollar'),
+  ('fivedollarbill', 'channel-five-dollar'),
+  ('tendollarbill', 'channel-ten-dollar'),
+  ('twentydollarbill', 'channel-twenty-dollar'),
+  ('fiftydollarbill', 'channel-fifty-dollar'),
+  ('hundreddollarbill', 'channel-hundred-dollar'),
+  ('hyperspace-labs', 'hyperspace-channel'),
+  ('calendar-plaisio', 'music-channel'),
+  ('mamba-mentality', 'motivation-channel'),
+  ('anxiety-bar-and-song-title', 'test1-channel'),
+  ('meetyourpadre-only-bar-end', 'test2-channel'),
+  ('ishowspeed-clear', 'test3-channel'),
+  ('ishowspeed-paused-with-bar', 'test4-channel'),
+  ('ultralightbeam-full', 'test5-channel'),
+  ('walk-with-me-ultralightbeam-full', 'test6-channel'),
+  ('default', 'default-channel');

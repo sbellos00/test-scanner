@@ -1,58 +1,38 @@
 import { NextResponse } from 'next/server';
 import { getActiveUrl } from '@/lib/kv';
+import { getChannel } from '@/lib/mappings';
 
-/**
- * Target to channel mapping
- * Maps physical targets to content channels
- */
-const targetToChannelMap: Record<string, string> = {
-  // Scanner app targets (dollar bills)
-  'onedollarbill': 'channel-one-dollar',
-  'twodollarbill': 'channel-two-dollar',
-  'fivedollarbill': 'channel-five-dollar',
-  'tendollarbill': 'channel-ten-dollar',
-  'twentydollarbill': 'channel-twenty-dollar',
-  'fiftydollarbill': 'channel-fifty-dollar',
-  'hundreddollarbill': 'channel-hundred-dollar',
-  
-  // TV Beta targets
-  'hyperspace-labs': 'hyperspace-channel',
-  'calendar-plaisio': 'music-channel',
-  'mamba-mentality': 'motivation-channel',
-
-  // Tests for realtime playback
-  'anxiety-bar-and-song-title': 'test1-channel',
-  'meetyourpadre-only-bar-end': 'test2-channel',
-  'ishowspeed-clear': 'test3-channel',
-  'ishowspeed-paused-with-bar': 'test4-channel',
-  'ultralightbeam-full': 'test5-channel',
-  'walk-with-me-ultralightbeam-full': 'test6-channel',
-
-  
-  // Default fallback
-  'default': 'default-channel'
-};
-
-/**
- * API endpoint to get the current active URL for a target
- * Uses Vercel KV for fast access to active URLs
- */
 export async function GET(request: Request) {
   try {
-    // Get target from query parameters
+    // Check the referer header to ensure it's coming from our app
+    const referer = request.headers.get('referer');
+    const allowedDomains = [
+      'scanhyper.space',
+      'www.scanhyper.space',
+      'test-scanner-rho.vercel.app',
+      'tv-2-0.vercel.app',
+      'localhost:3000' // For local development
+    ];
+    
+    const isValidReferer = referer && 
+      allowedDomains.some(domain => referer.includes(domain));
+    
+    if (!isValidReferer) {
+      return NextResponse.json(
+        { error: 'wah gwan delilah, pay my respects to your padre por favooooor, muchacho cholocato, me gusto me ninia' },
+        { status: 403 }
+      );
+    }
+
     const { searchParams } = new URL(request.url);
     const target = searchParams.get('target') || 'default';
-    
-    // Map target to channel
-    const channel = targetToChannelMap[target] || 'default-channel';
-    
-    // Get the active URL from KV store using the channel as identifier
+
+    const channel = getChannel(target);
     const activeUrl = await getActiveUrl(channel);
-    
-    // Return the URL with CORS headers
+
     return NextResponse.json(
-      { url: activeUrl }, 
-      { 
+      { url: activeUrl },
+      {
         headers: {
           'Access-Control-Allow-Origin': '*',
           'Access-Control-Allow-Methods': 'GET'
@@ -62,8 +42,8 @@ export async function GET(request: Request) {
   } catch (error) {
     console.error('Error fetching current URL:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch URL', url: 'https://hyperspace.digital/error' }, 
+      { error: 'Failed to fetch URL', url: 'https://hyperspace.digital/error' },
       { status: 500 }
     );
   }
-} 
+}
