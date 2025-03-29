@@ -28,10 +28,11 @@ export async function GET(request: Request) {
     const target = searchParams.get('target') || 'default';
 
     const channel = getChannel(target);
-    const activeUrl = await getActiveUrl(channel);
+    const activeUrlData = await getActiveUrl(channel);
 
+    // Return the complete data object with both url and introVideo (if present)
     return NextResponse.json(
-      { url: activeUrl },
+      activeUrlData,
       {
         headers: {
           'Access-Control-Allow-Origin': '*',
@@ -42,7 +43,7 @@ export async function GET(request: Request) {
   } catch (error) {
     console.error('Error fetching current URL:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch URL', url: 'https://hyperspace.digital/error' },
+      { url: 'https://hyperspace.digital/error' },
       { status: 500 }
     );
   }

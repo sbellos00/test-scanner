@@ -3,11 +3,19 @@
  */
 
 /**
- * Fetches the active URL for a given target from the API
- * @param target - The target image identifier
- * @returns The active URL for the target
+ * Interface for target URL data structure
  */
-export async function fetchActiveUrl(target: string): Promise<string> {
+interface TargetUrlData {
+  url: string;
+  introVideo?: string;
+}
+
+/**
+ * Fetches the active URL data for a given target from the API
+ * @param target - The target image identifier
+ * @returns The active URL data for the target
+ */
+export async function fetchActiveUrl(target: string): Promise<TargetUrlData> {
   try {
     // Use relative URL for API requests in the browser
     const response = await fetch(`/api/current-url?target=${target}`);
@@ -16,10 +24,10 @@ export async function fetchActiveUrl(target: string): Promise<string> {
       throw new Error(`API request failed with status ${response.status}`);
     }
     
-    const data = await response.json();
-    return data.url;
+    // Return the complete data object
+    return await response.json();
   } catch (error) {
     console.error('Error fetching active URL:', error);
-    return 'https://hyperspace.digital/error';
+    return { url: 'https://hyperspace.digital/error' };
   }
 } 

@@ -5,6 +5,14 @@ import * as dotenv from 'dotenv';
 dotenv.config({ path: '.env.local' });
 
 /**
+ * Interface for target URL data structure
+ */
+interface TargetUrlData {
+  url: string;
+  introVideo?: string;
+}
+
+/**
  * Upstash Redis utilities for HyperSpace Scanner
  */
 
@@ -20,41 +28,58 @@ const redis = new Redis({
 });
 
 /**
- * Get the active URL for a target from Redis
+ * Get the active URL data for a target from Redis
  * @param target - Target identifier
- * @returns Active URL for the target or default URL if not found
+ * @returns Active URL data for the target or default values if not found
  */
-export async function getActiveUrl(target: string): Promise<string> {
+export async function getActiveUrl(target: string): Promise<TargetUrlData> {
   try {
-    const activeUrl = await redis.get<string>(`active_url:${target}`);
+    const activeUrlData = await redis.get<TargetUrlData>(`active_url:${target}`);
     
-    // Return the active URL if found, or a default URL if not
-    return activeUrl || 'https://hyperspace.digital/default';
+    if (activeUrlData) {
+      return activeUrlData;
+    }
+    
+    // For backward compatibility - if we find a string instead of an object
+    const legacyUrl = await redis.get<string>(`active_url:${target}`);
+    if (typeof legacyUrl === 'string') {
+      return { url: legacyUrl };
+    }
+    
+    // Return default if nothing found
+    return { url: 'https://hyperspace.digital/default' };
   } catch (error) {
     console.error('Error fetching from Redis:', error);
-    return 'https://hyperspace.digital/error';
+    return { url: 'https://hyperspace.digital/error' };
   }
 }
 
 /**
- * Set the active URL for a target in Redis
+ * Set the active URL data for a target in Redis
+ * IMPORTANT! This is only for the set-up kv script that is used for migration/set-up purposes.
+ * We NEVER use this function during our normal operations.
  * @param target - Target identifier
- * @param url - URL to set as active
+ * @param urlData - URL data object or string URL
  * @param expirationSeconds - Optional TTL in seconds
  * @returns True if successful, false otherwise
  */
 export async function setActiveUrl(
   target: string, 
-  url: string, 
+  urlData: TargetUrlData | string, 
   expirationSeconds?: number
 ): Promise<boolean> {
   try {
+    // Handle both string URLs (legacy) and new URL data objects
+    const dataToStore: TargetUrlData = typeof urlData === 'string' 
+      ? { url: urlData } 
+      : urlData;
+    
     if (expirationSeconds) {
       // Set with expiration
-      await redis.set(`active_url:${target}`, url, { ex: expirationSeconds });
+      await redis.set(`active_url:${target}`, dataToStore, { ex: expirationSeconds });
     } else {
       // Set without expiration
-      await redis.set(`active_url:${target}`, url);
+      await redis.set(`active_url:${target}`, dataToStore);
     }
     return true;
   } catch (error) {

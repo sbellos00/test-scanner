@@ -17,7 +17,7 @@ declare global {
       'a-entity': any;
     }
   }
-  
+
   interface Window {
     AFRAME: any;
     mindar: any;
@@ -27,21 +27,56 @@ declare global {
 export default function NewScannerPage() {
   const sceneContainerRef = useRef<HTMLDivElement>(null);
   const [isLoading, setIsLoading] = useState(false);
-  
+
+  // Function to play intro video when provided
+  const playIntroVideo = (videoUrl: string): Promise<void> => {
+    return new Promise((resolve) => {
+      // Create modal container
+      const modal = document.createElement('div');
+      modal.className = 'fixed top-0 left-0 w-full h-full flex items-center justify-center bg-black z-50';
+      
+      // Create video element
+      const video = document.createElement('video');
+      video.className = 'w-full h-full object-contain'; // Full screen with proper aspect ratio
+      video.src = videoUrl;
+      video.controls = false;
+      video.autoplay = true;
+      video.playsInline = true; // Important for mobile
+
+      // When video ends, resolve the promise
+      video.onended = () => {
+        document.body.removeChild(modal);
+        resolve();
+      };
+
+      // Add elements to DOM
+      modal.appendChild(video);
+      document.body.appendChild(modal);
+    });
+  };
+
   // Wrapper function to handle loading state
   const handleTargetFound = async (target: string) => {
     setIsLoading(true);
     try {
-      const activeUrl = await fetchActiveUrl(target);
-      window.location.href = activeUrl;
+      const urlData = await fetchActiveUrl(target);
+
+      // If intro video exists, hide loading overlay first, then play intro
+      if (urlData.introVideo) {
+        setIsLoading(false); // Hide loading overlay before playing intro video
+        await playIntroVideo(urlData.introVideo);
+      }
+
+      // Redirect to the main URL
+      window.location.href = urlData.url;
     } catch (error) {
       console.error('Error handling target found:', error);
       window.location.href = 'https://hyperspace.digital/error';
     } finally {
-      setIsLoading(false);
+      setIsLoading(false); // Ensure loading is always turned off in case of errors
     }
   };
-  
+
   useEffect(() => {
     // This code runs after the component mounts and all scripts load
     if (typeof window !== 'undefined') {
@@ -73,17 +108,17 @@ export default function NewScannerPage() {
 
           </a-scene>
         `;
-        
+
         sceneContainerRef.current.innerHTML = aframeHTML;
       }
-      
+
       // Wait for a short delay to ensure scene is initialized
       const initTimeout = setTimeout(() => {
         // Setup target event listeners
         const targets = [
           'anxiety-bar-and-song-title', 'meetyourpadre-only-bar-end', 'ishowspeed-clear', 'ishowspeed-paused-with-bar', 'ultralightbeam-full', 'walk-with-me-ultralightbeam-full'
         ];
-        
+
         targets.forEach(target => {
           const element = document.querySelector(`#${target}`);
           if (element) {
@@ -92,11 +127,11 @@ export default function NewScannerPage() {
             });
           }
         });
-        
+
         // Attempt to play videos for animations
         const attemptPlay = (video: HTMLVideoElement) => {
           if (!video) return;
-          
+
           const playPromise = video.play();
           if (playPromise !== undefined) {
             playPromise.then(() => {
@@ -106,41 +141,43 @@ export default function NewScannerPage() {
             });
           }
         };
-        
+
         const enterUtopiaVideo = document.getElementById('enterUtopiaVideo') as HTMLVideoElement;
         const portalScannerVideo = document.getElementById('portalScannerVideo') as HTMLVideoElement;
-        
+
         if (enterUtopiaVideo) attemptPlay(enterUtopiaVideo);
         if (portalScannerVideo) attemptPlay(portalScannerVideo);
       }, 1000);
-      
+
       return () => clearTimeout(initTimeout);
     }
   }, []);
-  
+
   return (
     <>
       <Script src="https://aframe.io/releases/1.6.0/aframe.min.js" strategy="beforeInteractive" />
       <Script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js" strategy="beforeInteractive" />
-      
+
       <div id="loadingAnimation" className="animation-container">
         <video id="enterUtopiaVideo" autoPlay muted loop playsInline>
           <source src="/gnxscannerloadingscreen.mp4" type="video/mp4" />
         </video>
       </div>
-      
+
       <div id="scannerAnimation" className="animation-container hidden">
         <video id="portalScannerVideo" autoPlay muted loop playsInline>
           <source src="/portalScanner.mp4" type="video/mp4" />
         </video>
       </div>
-      
+
       {isLoading && (
         <div className="fixed top-0 left-0 w-full h-full flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="text-white">Redirecting...</div>
+          <video id="enterUtopiaVideo" autoPlay muted loop playsInline>
+            <source src="/gnxscannerloadingscreen.mp4" type="video/mp4" />
+          </video>
         </div>
       )}
-      
+
       <div ref={sceneContainerRef} id="scene-container" className="ar-scene-container"></div>
     </>
   );
