@@ -43,13 +43,25 @@ export default function NewScannerPage() {
       video.className = 'w-full h-full object-contain relative z-10'; // Make video above background image
       video.src = videoUrl;
       video.controls = false;
-      video.muted = true; // Keep video muted
+      video.muted = true; // Keep video muted for autoplay
       video.playsInline = true;
       
       // Create separate audio element for sound
       const audio = document.createElement('audio');
       audio.src = audioUrl;
-      audio.muted = false; // We want audio to play
+      audio.muted = true; // Start muted to ensure it can autoplay
+      
+      // Add user interaction handler to unmute audio
+      const unmuteAudio = () => {
+        // Try to unmute audio after user interaction
+        audio.muted = false;
+        document.removeEventListener('click', unmuteAudio);
+        document.removeEventListener('touchstart', unmuteAudio);
+      };
+      
+      // Listen for user interactions to unmute
+      document.addEventListener('click', unmuteAudio);
+      document.addEventListener('touchstart', unmuteAudio);
       
       // When video ends, show full background overlay
       video.onended = () => {
@@ -71,6 +83,10 @@ export default function NewScannerPage() {
         
         // Clean up audio element
         document.body.removeChild(audio);
+        
+        // Clean up event listeners
+        document.removeEventListener('click', unmuteAudio);
+        document.removeEventListener('touchstart', unmuteAudio);
         
         // Continue with redirect
         resolve();
@@ -94,6 +110,18 @@ export default function NewScannerPage() {
             if (audioPromise !== undefined) {
               audioPromise.then(() => {
                 console.log('Audio started playing');
+                
+                // Also try to create a button to unmute
+                const unmuteButton = document.createElement('button');
+                unmuteButton.textContent = 'Tap for sound';
+                unmuteButton.className = 'absolute bottom-5 left-1/2 transform -translate-x-1/2 bg-white bg-opacity-70 text-black py-2 px-4 rounded-full z-20';
+                unmuteButton.onclick = (e) => {
+                  e.stopPropagation();
+                  audio.muted = false;
+                  unmuteButton.style.display = 'none';
+                };
+                modal.appendChild(unmuteButton);
+                
               }).catch(error => {
                 console.warn('Audio autoplay was prevented:', error);
               });
