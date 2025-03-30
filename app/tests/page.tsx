@@ -38,17 +38,6 @@ export default function NewScannerPage() {
       const modal = document.createElement('div');
       modal.className = 'fixed top-0 left-0 w-full h-full flex items-center justify-center bg-black z-50';
       
-      // Add background image to prevent camera flashing during redirect
-      const backgroundImg = document.createElement('img');
-      backgroundImg.src = '/ONtinosOMitoglou.png'; // Use the loading image as fallback
-      backgroundImg.className = 'absolute top-0 left-0 w-full h-full object-cover';
-      modal.appendChild(backgroundImg);
-      
-      // Create separate audio element for sound
-      const audio = document.createElement('audio');
-      audio.src = audioUrl;
-      audio.muted = false; // We want audio to play
-      
       // Create video element
       const video = document.createElement('video');
       video.className = 'w-full h-full object-contain relative z-10'; // Make video above background image
@@ -57,10 +46,33 @@ export default function NewScannerPage() {
       video.muted = true; // Keep video muted
       video.playsInline = true;
       
-      // When video ends, keep background visible but hide video
+      // Create separate audio element for sound
+      const audio = document.createElement('audio');
+      audio.src = audioUrl;
+      audio.muted = false; // We want audio to play
+      
+      // When video ends, show full background overlay
       video.onended = () => {
-        video.style.display = 'none'; // Hide video but keep modal with background
+        // Remove the video modal
         document.body.removeChild(modal);
+        
+        // Create a new full-screen background overlay that will persist during redirect
+        const backgroundOverlay = document.createElement('div');
+        backgroundOverlay.className = 'fixed top-0 left-0 w-full h-full bg-black z-[9999]';
+        
+        // Add background image
+        const backgroundImg = document.createElement('img');
+        backgroundImg.src = '/ONtinosOMitoglou.png';
+        backgroundImg.className = 'w-full h-full object-cover';
+        backgroundOverlay.appendChild(backgroundImg);
+        
+        // Add to body
+        document.body.appendChild(backgroundOverlay);
+        
+        // Clean up audio element
+        document.body.removeChild(audio);
+        
+        // Continue with redirect
         resolve();
       };
       
