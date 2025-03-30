@@ -49,7 +49,7 @@ export default function NewScannerPage() {
       
       // Create unmute button (defined early so it can be referenced in handlers)
       const unmuteButton = document.createElement('button');
-      unmuteButton.textContent = 'Tap for sound';
+      unmuteButton.textContent = 'Tap Anywhere';
       unmuteButton.className = 'absolute bottom-5 left-1/2 transform -translate-x-1/2 bg-white bg-opacity-70 text-black py-2 px-4 rounded-full z-20';
       
       // Add user interaction handler to unmute video
