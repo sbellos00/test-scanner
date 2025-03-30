@@ -31,61 +31,93 @@ export default function ScannerPage() {
   // Function to play intro video when provided
   const playIntroVideo = (videoUrl: string): Promise<void> => {
     return new Promise((resolve) => {
-      // Extract audio URL from video URL (using the actual format)
-      const audioUrl = videoUrl.replace(/\.(mp4|webm)/, '_audio.mp3');
+      // Preload the background image
+      const preloadImage = new Image();
+      preloadImage.src = '/ONtinosOMitoglou.png';
       
       // Create modal container
       const modal = document.createElement('div');
       modal.className = 'fixed top-0 left-0 w-full h-full flex items-center justify-center bg-black z-50';
       
-      // Add background image to prevent camera flashing during redirect
-      const backgroundImg = document.createElement('img');
-      backgroundImg.src = '/ONtinosOMitoglou.png'; // Use the loading image as fallback
-      backgroundImg.className = 'absolute top-0 left-0 w-full h-full object-cover';
-      modal.appendChild(backgroundImg);
-      
-      // Create separate audio element for sound
-      const audio = document.createElement('audio');
-      audio.src = audioUrl;
-      audio.muted = false; // We want audio to play
-      
       // Create video element
       const video = document.createElement('video');
-      video.className = 'w-full h-full object-contain relative z-10'; // Make video above background image
+      video.className = 'w-full h-full object-contain relative z-10';
       video.src = videoUrl;
       video.controls = false;
-      video.muted = true; // Keep video muted
+      video.muted = true; // Keep video muted for autoplay
       video.playsInline = true;
       
-      // When video ends, keep background visible but hide video
+      // Create unmute button (defined early so it can be referenced in handlers)
+      const unmuteButton = document.createElement('button');
+      unmuteButton.textContent = 'Tap Anywhere';
+      unmuteButton.className = 'absolute bottom-5 left-1/2 transform -translate-x-1/2 bg-white bg-opacity-70 text-black py-2 px-4 rounded-full z-20';
+      
+      // Add user interaction handler to unmute video
+      const unmuteVideo = () => {
+        // Try to unmute video after user interaction
+        video.muted = false;
+        
+        // Hide the unmute button
+        if (unmuteButton.parentNode) {
+          unmuteButton.style.display = 'none';
+        }
+        
+        // Remove event listeners
+        document.removeEventListener('click', unmuteVideo);
+        document.removeEventListener('touchstart', unmuteVideo);
+      };
+      
+      // Listen for user interactions to unmute
+      document.addEventListener('click', unmuteVideo);
+      document.addEventListener('touchstart', unmuteVideo);
+      
+      // When video ends, show full background overlay
       video.onended = () => {
-        video.style.display = 'none'; // Hide video but keep modal with background
+        // Remove the video modal
         document.body.removeChild(modal);
+        
+        // Create a new full-screen background overlay that will persist during redirect
+        const backgroundOverlay = document.createElement('div');
+        backgroundOverlay.className = 'fixed top-0 left-0 w-full h-full bg-black z-[9999]';
+        
+        // Add background image (using the preloaded image src)
+        const backgroundImg = document.createElement('img');
+        backgroundImg.src = preloadImage.src;
+        backgroundImg.className = 'w-full h-full object-cover';
+        
+        // Add a solid color background as fallback in case image still loading
+        backgroundOverlay.style.backgroundColor = '#000000';
+        backgroundOverlay.appendChild(backgroundImg);
+        
+        // Add to body
+        document.body.appendChild(backgroundOverlay);
+        
+        // Clean up event listeners
+        document.removeEventListener('click', unmuteVideo);
+        document.removeEventListener('touchstart', unmuteVideo);
+        
+        // Continue with redirect
         resolve();
       };
       
       // Add elements to DOM
       modal.appendChild(video);
       document.body.appendChild(modal);
-      document.body.appendChild(audio); // Add audio to body
       
-      // Force play both video and audio with retry
+      // Add button click handler and append to modal
+      unmuteButton.onclick = (e) => {
+        e.stopPropagation();
+        unmuteVideo();
+      };
+      modal.appendChild(unmuteButton);
+      
+      // Force play video with retry
       const playMedia = () => {
         // Play video
         const videoPromise = video.play();
         if (videoPromise !== undefined) {
           videoPromise.then(() => {
             console.log('Intro video started playing');
-            
-            // Try to play audio once video starts successfully
-            const audioPromise = audio.play();
-            if (audioPromise !== undefined) {
-              audioPromise.then(() => {
-                console.log('Audio started playing');
-              }).catch(error => {
-                console.warn('Audio autoplay was prevented:', error);
-              });
-            }
           }).catch(error => {
             console.warn('Video autoplay was prevented:', error);
             // Retry after a short delay
