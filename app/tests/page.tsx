@@ -31,37 +31,41 @@ export default function NewScannerPage() {
   // Function to play intro video when provided
   const playIntroVideo = (videoUrl: string): Promise<void> => {
     return new Promise((resolve) => {
-      // Extract audio URL from video URL (using the actual format)
-      const audioUrl = videoUrl.replace(/\.(mp4|webm)/, '_audio.mp3');
-      
       // Create modal container
       const modal = document.createElement('div');
       modal.className = 'fixed top-0 left-0 w-full h-full flex items-center justify-center bg-black z-50';
       
       // Create video element
       const video = document.createElement('video');
-      video.className = 'w-full h-full object-contain relative z-10'; // Make video above background image
+      video.className = 'w-full h-full object-contain relative z-10';
       video.src = videoUrl;
       video.controls = false;
       video.muted = true; // Keep video muted for autoplay
       video.playsInline = true;
       
-      // Create separate audio element for sound
-      const audio = document.createElement('audio');
-      audio.src = audioUrl;
-      audio.muted = true; // Start muted to ensure it can autoplay
+      // Create unmute button (defined early so it can be referenced in handlers)
+      const unmuteButton = document.createElement('button');
+      unmuteButton.textContent = 'Tap for sound';
+      unmuteButton.className = 'absolute bottom-5 left-1/2 transform -translate-x-1/2 bg-white bg-opacity-70 text-black py-2 px-4 rounded-full z-20';
       
-      // Add user interaction handler to unmute audio
-      const unmuteAudio = () => {
-        // Try to unmute audio after user interaction
-        audio.muted = false;
-        document.removeEventListener('click', unmuteAudio);
-        document.removeEventListener('touchstart', unmuteAudio);
+      // Add user interaction handler to unmute video
+      const unmuteVideo = () => {
+        // Try to unmute video after user interaction
+        video.muted = false;
+        
+        // Hide the unmute button
+        if (unmuteButton.parentNode) {
+          unmuteButton.style.display = 'none';
+        }
+        
+        // Remove event listeners
+        document.removeEventListener('click', unmuteVideo);
+        document.removeEventListener('touchstart', unmuteVideo);
       };
       
       // Listen for user interactions to unmute
-      document.addEventListener('click', unmuteAudio);
-      document.addEventListener('touchstart', unmuteAudio);
+      document.addEventListener('click', unmuteVideo);
+      document.addEventListener('touchstart', unmuteVideo);
       
       // When video ends, show full background overlay
       video.onended = () => {
@@ -81,12 +85,9 @@ export default function NewScannerPage() {
         // Add to body
         document.body.appendChild(backgroundOverlay);
         
-        // Clean up audio element
-        document.body.removeChild(audio);
-        
         // Clean up event listeners
-        document.removeEventListener('click', unmuteAudio);
-        document.removeEventListener('touchstart', unmuteAudio);
+        document.removeEventListener('click', unmuteVideo);
+        document.removeEventListener('touchstart', unmuteVideo);
         
         // Continue with redirect
         resolve();
@@ -95,37 +96,21 @@ export default function NewScannerPage() {
       // Add elements to DOM
       modal.appendChild(video);
       document.body.appendChild(modal);
-      document.body.appendChild(audio); // Add audio to body
       
-      // Force play both video and audio with retry
+      // Add button click handler and append to modal
+      unmuteButton.onclick = (e) => {
+        e.stopPropagation();
+        unmuteVideo();
+      };
+      modal.appendChild(unmuteButton);
+      
+      // Force play video with retry
       const playMedia = () => {
         // Play video
         const videoPromise = video.play();
         if (videoPromise !== undefined) {
           videoPromise.then(() => {
             console.log('Intro video started playing');
-            
-            // Try to play audio once video starts successfully
-            const audioPromise = audio.play();
-            if (audioPromise !== undefined) {
-              audioPromise.then(() => {
-                console.log('Audio started playing');
-                
-                // Also try to create a button to unmute
-                const unmuteButton = document.createElement('button');
-                unmuteButton.textContent = 'Tap for sound';
-                unmuteButton.className = 'absolute bottom-5 left-1/2 transform -translate-x-1/2 bg-white bg-opacity-70 text-black py-2 px-4 rounded-full z-20';
-                unmuteButton.onclick = (e) => {
-                  e.stopPropagation();
-                  audio.muted = false;
-                  unmuteButton.style.display = 'none';
-                };
-                modal.appendChild(unmuteButton);
-                
-              }).catch(error => {
-                console.warn('Audio autoplay was prevented:', error);
-              });
-            }
           }).catch(error => {
             console.warn('Video autoplay was prevented:', error);
             // Retry after a short delay
