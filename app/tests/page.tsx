@@ -31,44 +31,70 @@ export default function NewScannerPage() {
   // Function to play intro video when provided
   const playIntroVideo = (videoUrl: string): Promise<void> => {
     return new Promise((resolve) => {
+      // Extract audio URL from video URL (using the actual format)
+      const audioUrl = videoUrl.replace(/\.(mp4|webm)/, '_audio.mp3');
+      
       // Create modal container
       const modal = document.createElement('div');
       modal.className = 'fixed top-0 left-0 w-full h-full flex items-center justify-center bg-black z-50';
       
+      // Add background image to prevent camera flashing during redirect
+      const backgroundImg = document.createElement('img');
+      backgroundImg.src = '/ONtinosOMitoglou.png'; // Use the loading image as fallback
+      backgroundImg.className = 'absolute top-0 left-0 w-full h-full object-cover';
+      modal.appendChild(backgroundImg);
+      
+      // Create separate audio element for sound
+      const audio = document.createElement('audio');
+      audio.src = audioUrl;
+      audio.muted = false; // We want audio to play
+      
       // Create video element
       const video = document.createElement('video');
-      video.className = 'w-full h-full object-contain'; // Full screen with proper aspect ratio
+      video.className = 'w-full h-full object-contain relative z-10'; // Make video above background image
       video.src = videoUrl;
       video.controls = false;
-      video.muted = true; // Start muted to help with autoplay
-      video.playsInline = true; // Important for mobile
+      video.muted = true; // Keep video muted
+      video.playsInline = true;
       
-      // When video ends, resolve the promise
+      // When video ends, keep background visible but hide video
       video.onended = () => {
+        video.style.display = 'none'; // Hide video but keep modal with background
         document.body.removeChild(modal);
         resolve();
       };
-
+      
       // Add elements to DOM
       modal.appendChild(video);
       document.body.appendChild(modal);
+      document.body.appendChild(audio); // Add audio to body
       
-      // Force play with retry mechanism
-      const playVideo = () => {
-        const playPromise = video.play();
-        if (playPromise !== undefined) {
-          playPromise.then(() => {
+      // Force play both video and audio with retry
+      const playMedia = () => {
+        // Play video
+        const videoPromise = video.play();
+        if (videoPromise !== undefined) {
+          videoPromise.then(() => {
             console.log('Intro video started playing');
-            // Keep video muted throughout playback
+            
+            // Try to play audio once video starts successfully
+            const audioPromise = audio.play();
+            if (audioPromise !== undefined) {
+              audioPromise.then(() => {
+                console.log('Audio started playing');
+              }).catch(error => {
+                console.warn('Audio autoplay was prevented:', error);
+              });
+            }
           }).catch(error => {
-            console.warn('Autoplay was prevented:', error);
+            console.warn('Video autoplay was prevented:', error);
             // Retry after a short delay
-            setTimeout(playVideo, 1000);
+            setTimeout(playMedia, 1000);
           });
         }
       };
       
-      playVideo();
+      playMedia();
     });
   };
 
