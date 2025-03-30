@@ -31,6 +31,10 @@ export default function NewScannerPage() {
   // Function to play intro video when provided
   const playIntroVideo = (videoUrl: string): Promise<void> => {
     return new Promise((resolve) => {
+      // Preload the background image
+      const preloadImage = new Image();
+      preloadImage.src = '/ONtinosOMitoglou.png';
+      
       // Create modal container
       const modal = document.createElement('div');
       modal.className = 'fixed top-0 left-0 w-full h-full flex items-center justify-center bg-black z-50';
@@ -76,10 +80,13 @@ export default function NewScannerPage() {
         const backgroundOverlay = document.createElement('div');
         backgroundOverlay.className = 'fixed top-0 left-0 w-full h-full bg-black z-[9999]';
         
-        // Add background image
+        // Add background image (using the preloaded image src)
         const backgroundImg = document.createElement('img');
-        backgroundImg.src = '/ONtinosOMitoglou.png';
+        backgroundImg.src = preloadImage.src;
         backgroundImg.className = 'w-full h-full object-cover';
+        
+        // Add a solid color background as fallback in case image still loading
+        backgroundOverlay.style.backgroundColor = '#000000';
         backgroundOverlay.appendChild(backgroundImg);
         
         // Add to body
@@ -247,4 +254,4 @@ export default function NewScannerPage() {
       <div ref={sceneContainerRef} id="scene-container" className="ar-scene-container"></div>
     </>
   );
-} 
+}
