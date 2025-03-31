@@ -33,7 +33,7 @@ export default function ScannerPage() {
     return new Promise((resolve) => {
       // Preload the background image
       const preloadImage = new Image();
-      preloadImage.src = '/ONtinosOMitoglou.png';
+      preloadImage.src = 'https://res.cloudinary.com/dawyrpt2m/image/upload/v1743421018/Screenshot_2025-03-31_143549_dwhfs4.png';
       
       // Create modal container
       const modal = document.createElement('div');
@@ -249,7 +249,7 @@ export default function ScannerPage() {
       
       {isLoading && (
         <div className="fixed top-0 left-0 w-full h-full flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <img src="/ONtinosOMitoglou.png" alt="Loading" className="max-w-full max-h-full" />
+          <img src="https://res.cloudinary.com/dawyrpt2m/image/upload/v1743421018/Screenshot_2025-03-31_143549_dwhfs4.png" alt="Loading" className="max-w-full max-h-full" />
         </div>
       )}
       
