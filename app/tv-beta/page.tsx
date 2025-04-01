@@ -24,7 +24,7 @@ declare global {
   }
 }
 
-export default function ScannerPage() {
+export default function NewScannerPage() {
   const sceneContainerRef = useRef<HTMLDivElement>(null);
   const [isLoading, setIsLoading] = useState(false);
   
@@ -159,7 +159,7 @@ export default function ScannerPage() {
       if (sceneContainerRef.current) {
         const aframeHTML = `
           <a-scene
-            mindar-image="imageTargetSrc: /dollah.mind; uiLoading:#loadingAnimation; uiScanning:#scannerAnimation; autoStart: true"
+            mindar-image="imageTargetSrc: /targets.mind; uiLoading:#loadingAnimation; uiScanning:#scannerAnimation; autoStart: true"
             color-space="sRGB" 
             renderer="colorManagement: true, physicallyCorrectLights" 
             vr-mode-ui="enabled: false"
@@ -174,13 +174,9 @@ export default function ScannerPage() {
             
             <a-camera position="0 0 0" look-controls="enabled: false" exposure="1.2" auto-exposure="true"></a-camera>
             
-            <a-entity id="onedollarbill" mindar-image-target="targetIndex: 0"></a-entity>
-            <a-entity id="twodollarbill" mindar-image-target="targetIndex: 1"></a-entity>
-            <a-entity id="fivedollarbill" mindar-image-target="targetIndex: 2"></a-entity>
-            <a-entity id="tendollarbill" mindar-image-target="targetIndex: 3"></a-entity>
-            <a-entity id="twentydollarbill" mindar-image-target="targetIndex: 4"></a-entity>
-            <a-entity id="fiftydollarbill" mindar-image-target="targetIndex: 5"></a-entity>
-            <a-entity id="hundreddollarbill" mindar-image-target="targetIndex: 6"></a-entity>
+            <a-entity id="hyperspace-labs" mindar-image-target="targetIndex: 0"></a-entity>
+            <a-entity id="calendar-plaisio" mindar-image-target="targetIndex: 1"></a-entity>
+            <a-entity id="mamba-mentality" mindar-image-target="targetIndex: 2"></a-entity>
           </a-scene>
         `;
         
@@ -191,9 +187,7 @@ export default function ScannerPage() {
       const initTimeout = setTimeout(() => {
         // Setup target event listeners
         const targets = [
-          'onedollarbill', 'twodollarbill', 'fivedollarbill', 
-          'tendollarbill', 'twentydollarbill', 'fiftydollarbill', 
-          'hundreddollarbill'
+          'hyperspace-labs', 'calendar-plaisio', 'mamba-mentality'
         ];
         
         targets.forEach(target => {
