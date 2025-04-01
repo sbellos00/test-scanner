@@ -45,61 +45,18 @@ export default function NewScannerPage() {
       
       logDebug('Starting intro video playback');
       
-      // Check if the device is a Xiaomi phone with Chrome
-      const isXiaomiChrome = /xiaomi|mi/i.test(navigator.userAgent.toLowerCase()) && /chrome/i.test(navigator.userAgent.toLowerCase());
-      logDebug(`Xiaomi Chrome detected: ${isXiaomiChrome}`);
-      
-      // If Xiaomi with Chrome is detected, use alternative fallback approach
-      if (isXiaomiChrome) {
-        logDebug('Using fallback image-based experience for Xiaomi device');
-        // Create a full-screen overlay with background image instead of video
-        const fallbackOverlay = document.createElement('div');
-        fallbackOverlay.className = 'fixed top-0 left-0 w-full h-full flex items-center justify-center bg-black z-50';
-        
-        // Add background image as the visual
-        const img = document.createElement('img');
-        img.src = preloadImage.src;
-        img.className = 'w-full h-full object-cover';
-        fallbackOverlay.appendChild(img);
-        
-        // Add a message about the redirection
-        const redirectMsg = document.createElement('div');
-        redirectMsg.textContent = 'Redirecting you in 3 seconds...';
-        redirectMsg.className = 'absolute bottom-10 left-0 w-full text-center text-white text-lg font-bold';
-        fallbackOverlay.appendChild(redirectMsg);
-        
-        // Add to body
-        document.body.appendChild(fallbackOverlay);
-        
-        // Create audio element to play just the audio
-        const audio = document.createElement('audio');
-        audio.src = videoUrl;
-        audio.autoplay = true;
-        fallbackOverlay.appendChild(audio);
-        
-        // Set a timeout equal to video duration
-        setTimeout(() => {
-          document.body.removeChild(fallbackOverlay);
-          resolve();
-        }, 3000); // Adjust this time to match your intro video duration
-        
-        return; // Skip the rest of the function
-      }
-      
       // Create modal container with transparent background first
       const modal = document.createElement('div');
-      modal.className = 'fixed top-0 left-0 w-full h-full flex items-center justify-center z-50';
+      modal.className = 'fixed top-0 left-0 w-full h-full flex items-center justify-center bg-black z-50';
       
       // Create video element with modified CSS classes
       const video = document.createElement('video');
-      video.className = 'w-full h-full relative z-10'; // Removed object-contain
+      video.className = 'w-full h-full relative z-10 object-contain';
       video.muted = true; // Keep video muted for autoplay
       video.playsInline = true;
       video.playbackRate = 1.0; // Ensure playback rate is standard
       video.crossOrigin = "anonymous"; // Try to avoid CORS issues
-      
-      // Add an explicit poster for video
-      video.poster = preloadImage.src;
+      video.preload = 'auto';
       
       // Add debugging for video
       video.addEventListener('loadedmetadata', () => {
@@ -168,78 +125,62 @@ export default function NewScannerPage() {
         resolve();
       };
       
-      // Add elements to DOM: Add modal first
+      // Add elements to DOM: Add modal, then video
+      modal.appendChild(video);
+      modal.appendChild(unmuteButton);
       document.body.appendChild(modal);
-      logDebug('Modal added to DOM');
+      logDebug('Modal with video added to DOM');
       
-      // Add a small delay before adding video to ensure DOM is ready
-      setTimeout(() => {
-        // Set the black background after a small delay to ensure video renders first
-        modal.style.backgroundColor = 'black';
-        
-        // Add video to modal
-        modal.appendChild(video);
-        logDebug('Video element added to modal');
-        
-        // Add button click handler and append to modal
-        unmuteButton.onclick = (e) => {
-          e.stopPropagation();
-          unmuteVideo();
-        };
-        modal.appendChild(unmuteButton);
-        
-        // Set video source after adding to DOM
-        video.src = videoUrl;
-        logDebug(`Video source set: ${videoUrl}`);
-      }, 50);
+      // Set video source *after* adding to DOM to potentially help iOS
+      video.src = videoUrl;
+      logDebug(`Video source set: ${videoUrl}`);
       
-      // Enhanced playMedia function with readyState checks
+      // Attempt to play the video as soon as possible
       const playMedia = () => {
-        if (video.readyState >= 2) { // HAVE_CURRENT_DATA = 2
-          logDebug(`Playing video with readyState: ${video.readyState}`);
-          // Play video
-          const videoPromise = video.play();
-          if (videoPromise !== undefined) {
-            videoPromise.then(() => {
-              logDebug('Video playing successfully');
-            }).catch(error => {
-              logDebug(`Autoplay prevented: ${error}`);
-              // Add a user interaction hint if autoplay fails
-              unmuteButton.textContent = 'Tap to Play';
-              unmuteButton.style.display = 'block';
-            });
-          }
+        logDebug(`Attempting to play video (readyState: ${video.readyState})`);
+        const videoPromise = video.play();
+        
+        if (videoPromise !== undefined) {
+          videoPromise.then(() => {
+            logDebug('Video playing successfully (muted)');
+          }).catch(error => {
+            logDebug(`Autoplay prevented: ${error}. Waiting for user interaction.`);
+            // Ensure unmute button is visible if autoplay fails
+            unmuteButton.textContent = 'Tap to Play';
+            unmuteButton.style.display = 'block';
+          });
         } else {
-          logDebug(`Video not ready yet (readyState: ${video.readyState}), waiting for canplay`);
-          // Try again when video can play
-          video.addEventListener('canplay', () => {
-            logDebug('Video can now play via canplay event');
-            playMedia();
-          }, { once: true });
-          
-          // Set a timeout in case canplay never fires
-          setTimeout(() => {
-            if (video.readyState < 2) {
-              logDebug(`Video still not ready after timeout (readyState: ${video.readyState})`);
-              resolve();
-            }
-          }, 5000);
+          logDebug('video.play() did not return a promise. Autoplay likely blocked.');
+          // Ensure unmute button is visible
+          unmuteButton.textContent = 'Tap to Play';
+          unmuteButton.style.display = 'block';
         }
       };
       
-      // Listen for canplay event to start playing
-      video.addEventListener('canplay', () => {
-        logDebug('Video canplay event fired');
+      // Check initial ready state and try to play, otherwise wait for 'canplay'
+      if (video.readyState >= video.HAVE_FUTURE_DATA) { // HAVE_FUTURE_DATA = 3
         playMedia();
-      }, { once: true });
+      } else {
+        logDebug('Video not ready yet, waiting for canplay event');
+        video.addEventListener('canplay', () => {
+          logDebug('Video canplay event fired');
+          playMedia();
+        }, { once: true });
+      }
       
-      // Set a timeout to ensure we don't wait forever
-      setTimeout(() => {
-        if (video.readyState < 2) {
-          logDebug(`Timeout reached, video readyState: ${video.readyState}`);
-          resolve();
+      // Optional: A final safety timeout to resolve if nothing happens
+      const safetyTimeout = setTimeout(() => {
+        logDebug(`Safety timeout reached. Current readyState: ${video.readyState}`);
+        // Check if modal still exists (might have been removed by onended)
+        if (document.body.contains(modal)) {
+          document.body.removeChild(modal);
         }
-      }, 8000);
+        resolve();
+      }, 10000); // 10 seconds
+      
+      // Ensure safety timeout is cleared when video ends or resolves
+      video.addEventListener('ended', () => clearTimeout(safetyTimeout), { once: true });
+      video.addEventListener('error', () => clearTimeout(safetyTimeout), { once: true });
     });
   };
   
