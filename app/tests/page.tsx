@@ -37,15 +37,20 @@ export default function NewScannerPage() {
       
       // Create modal container
       const modal = document.createElement('div');
-      modal.className = 'fixed top-0 left-0 w-full h-full flex items-center justify-center bg-black z-50';
+      modal.className = 'fixed top-0 left-0 w-full h-full flex items-center justify-center z-50';
+      // Use transparent background initially to avoid overlay issues
+      modal.style.backgroundColor = 'rgba(0, 0, 0, 0.9)';
       
       // Create video element
       const video = document.createElement('video');
-      video.className = 'w-full h-full object-contain relative z-10';
-      video.src = videoUrl;
-      video.controls = false;
+      video.className = 'w-full h-full relative z-10';
+      // Remove object-contain to prevent potential rendering issues
+      video.style.objectFit = 'cover';
+      video.style.maxWidth = '100%';
+      video.style.maxHeight = '100%';
       video.muted = true; // Keep video muted for autoplay
       video.playsInline = true;
+      video.crossOrigin = 'anonymous'; // Try to address potential CORS issues
       
       // Create unmute button (defined early so it can be referenced in handlers)
       const unmuteButton = document.createElement('button');
@@ -71,14 +76,16 @@ export default function NewScannerPage() {
       document.addEventListener('click', unmuteVideo);
       document.addEventListener('touchstart', unmuteVideo);
       
-      // When video ends, show full background overlay
+      // Handle video end
       video.onended = () => {
         // Remove the video modal
-        document.body.removeChild(modal);
+        if (modal.parentNode) {
+          document.body.removeChild(modal);
+        }
         
         // Create a new full-screen background overlay that will persist during redirect
         const backgroundOverlay = document.createElement('div');
-        backgroundOverlay.className = 'fixed top-0 left-0 w-full h-full bg-black z-[9999]';
+        backgroundOverlay.className = 'fixed top-0 left-0 w-full h-full z-[9999]';
         
         // Add background image (using the preloaded image src)
         const backgroundImg = document.createElement('img');
@@ -99,8 +106,15 @@ export default function NewScannerPage() {
         // Continue with redirect
         resolve();
       };
+
+      // Log any video errors to help with debugging
+      video.onerror = (e) => {
+        console.error('Video error:', e);
+        // If video fails, still allow redirection
+        resolve();
+      };
       
-      // Add elements to DOM
+      // Add elements to DOM (add video after setting up event listeners but before setting src)
       modal.appendChild(video);
       document.body.appendChild(modal);
       
@@ -111,22 +125,52 @@ export default function NewScannerPage() {
       };
       modal.appendChild(unmuteButton);
       
-      // Force play video with retry
+      // Improved video play function with readyState check
       const playMedia = () => {
-        // Play video
-        const videoPromise = video.play();
-        if (videoPromise !== undefined) {
-          videoPromise.then(() => {
-            console.log('Intro video started playing');
-          }).catch(error => {
-            console.warn('Video autoplay was prevented:', error);
-            // Retry after a short delay
-            setTimeout(playMedia, 1000);
-          });
+        if (video.readyState >= 2) { // HAVE_CURRENT_DATA or better
+          // Play video
+          const videoPromise = video.play();
+          if (videoPromise !== undefined) {
+            videoPromise.then(() => {
+              console.log('Intro video started playing');
+            }).catch(error => {
+              console.warn('Video autoplay was prevented:', error);
+              // Add visible play button for user to tap if autoplay fails
+              const playButton = document.createElement('button');
+              playButton.textContent = 'Play Video';
+              playButton.className = 'absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white bg-opacity-70 text-black py-3 px-6 rounded-full z-30 text-lg font-bold';
+              playButton.onclick = (e) => {
+                e.stopPropagation();
+                video.play().catch(e => console.error('Manual play failed:', e));
+                if (playButton.parentNode) {
+                  playButton.parentNode.removeChild(playButton);
+                }
+              };
+              modal.appendChild(playButton);
+            });
+          }
+        } else {
+          // Try again after a short delay
+          setTimeout(playMedia, 100);
         }
       };
       
-      playMedia();
+      // Set up canplay event before setting src
+      video.addEventListener('canplay', () => {
+        console.log('Video can play now');
+        playMedia();
+      }, { once: true });
+      
+      // Set video source last, after all listeners are attached
+      video.src = videoUrl;
+      
+      // Fallback timeout in case canplay never fires
+      setTimeout(() => {
+        if (video.readyState === 0) {
+          console.warn('Video not loading, trying forced play');
+          playMedia();
+        }
+      }, 2000);
     });
   };
 
