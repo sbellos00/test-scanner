@@ -106,7 +106,7 @@ export default function NewScannerPage() {
         logDebug(`Video metadata loaded: ${video.videoWidth}x${video.videoHeight}`);
       });
       
-      video.addEventListener('error', (e) => {
+      video.addEventListener('error', () => {
         const errorMessage = `Video error: ${video.error?.code || 'unknown'} - ${video.error?.message || 'No message'}`;
         logDebug(errorMessage);
         // If video fails, continue with redirect
@@ -331,7 +331,7 @@ export default function NewScannerPage() {
           if (!video) return;
           
           // Add error tracking for debugging
-          video.addEventListener('error', (e) => {
+          video.addEventListener('error', () => {
             logDebug(`Animation video error: ${video.error?.code || 'unknown'} - ${video.error?.message || 'No message'}`);
           });
           
