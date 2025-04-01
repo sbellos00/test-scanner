@@ -27,6 +27,14 @@ declare global {
 export default function NewScannerPage() {
   const sceneContainerRef = useRef<HTMLDivElement>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [debugInfo, setDebugInfo] = useState<string[]>([]);
+  const [showDebug, setShowDebug] = useState(false);
+  
+  // Helper function to log both to console and to UI for mobile debugging
+  const logDebug = (message: string) => {
+    console.log(message);
+    setDebugInfo(prev => [...prev.slice(-10), message]); // Keep last 10 messages
+  };
   
   // Function to play intro video when provided
   const playIntroVideo = (videoUrl: string): Promise<void> => {
@@ -34,6 +42,49 @@ export default function NewScannerPage() {
       // Preload the background image
       const preloadImage = new Image();
       preloadImage.src = 'https://res.cloudinary.com/dawyrpt2m/image/upload/v1743421018/Screenshot_2025-03-31_143549_dwhfs4.png';
+      
+      logDebug('Starting intro video playback');
+      
+      // Check if the device is a Xiaomi phone with Chrome
+      const isXiaomiChrome = /xiaomi|mi/i.test(navigator.userAgent.toLowerCase()) && /chrome/i.test(navigator.userAgent.toLowerCase());
+      logDebug(`Xiaomi Chrome detected: ${isXiaomiChrome}`);
+      
+      // If Xiaomi with Chrome is detected, use alternative fallback approach
+      if (isXiaomiChrome) {
+        logDebug('Using fallback image-based experience for Xiaomi device');
+        // Create a full-screen overlay with background image instead of video
+        const fallbackOverlay = document.createElement('div');
+        fallbackOverlay.className = 'fixed top-0 left-0 w-full h-full flex items-center justify-center bg-black z-50';
+        
+        // Add background image as the visual
+        const img = document.createElement('img');
+        img.src = preloadImage.src;
+        img.className = 'w-full h-full object-cover';
+        fallbackOverlay.appendChild(img);
+        
+        // Add a message about the redirection
+        const redirectMsg = document.createElement('div');
+        redirectMsg.textContent = 'Redirecting you in 3 seconds...';
+        redirectMsg.className = 'absolute bottom-10 left-0 w-full text-center text-white text-lg font-bold';
+        fallbackOverlay.appendChild(redirectMsg);
+        
+        // Add to body
+        document.body.appendChild(fallbackOverlay);
+        
+        // Create audio element to play just the audio
+        const audio = document.createElement('audio');
+        audio.src = videoUrl;
+        audio.autoplay = true;
+        fallbackOverlay.appendChild(audio);
+        
+        // Set a timeout equal to video duration
+        setTimeout(() => {
+          document.body.removeChild(fallbackOverlay);
+          resolve();
+        }, 3000); // Adjust this time to match your intro video duration
+        
+        return; // Skip the rest of the function
+      }
       
       // Create modal container with transparent background first
       const modal = document.createElement('div');
@@ -45,17 +96,19 @@ export default function NewScannerPage() {
       video.muted = true; // Keep video muted for autoplay
       video.playsInline = true;
       video.playbackRate = 1.0; // Ensure playback rate is standard
+      video.crossOrigin = "anonymous"; // Try to avoid CORS issues
       
       // Add an explicit poster for video
       video.poster = preloadImage.src;
       
       // Add debugging for video
       video.addEventListener('loadedmetadata', () => {
-        console.log('Video metadata loaded, dimensions:', video.videoWidth, 'x', video.videoHeight);
+        logDebug(`Video metadata loaded: ${video.videoWidth}x${video.videoHeight}`);
       });
       
       video.addEventListener('error', (e) => {
-        console.error('Video error:', video.error?.code, video.error?.message);
+        const errorMessage = `Video error: ${video.error?.code || 'unknown'} - ${video.error?.message || 'No message'}`;
+        logDebug(errorMessage);
         // If video fails, continue with redirect
         resolve();
       });
@@ -69,6 +122,7 @@ export default function NewScannerPage() {
       const unmuteVideo = () => {
         // Try to unmute video after user interaction
         video.muted = false;
+        logDebug('Video unmuted via user interaction');
         
         // Hide the unmute button
         if (unmuteButton.parentNode) {
@@ -86,6 +140,7 @@ export default function NewScannerPage() {
       
       // When video ends, show full background overlay
       video.onended = () => {
+        logDebug('Video ended, preparing for redirect');
         // Remove the video modal
         document.body.removeChild(modal);
         
@@ -115,6 +170,7 @@ export default function NewScannerPage() {
       
       // Add elements to DOM: Add modal first
       document.body.appendChild(modal);
+      logDebug('Modal added to DOM');
       
       // Add a small delay before adding video to ensure DOM is ready
       setTimeout(() => {
@@ -123,6 +179,7 @@ export default function NewScannerPage() {
         
         // Add video to modal
         modal.appendChild(video);
+        logDebug('Video element added to modal');
         
         // Add button click handler and append to modal
         unmuteButton.onclick = (e) => {
@@ -133,35 +190,37 @@ export default function NewScannerPage() {
         
         // Set video source after adding to DOM
         video.src = videoUrl;
+        logDebug(`Video source set: ${videoUrl}`);
       }, 50);
       
       // Enhanced playMedia function with readyState checks
       const playMedia = () => {
         if (video.readyState >= 2) { // HAVE_CURRENT_DATA = 2
+          logDebug(`Playing video with readyState: ${video.readyState}`);
           // Play video
           const videoPromise = video.play();
           if (videoPromise !== undefined) {
             videoPromise.then(() => {
-              console.log('Intro video started playing successfully');
+              logDebug('Video playing successfully');
             }).catch(error => {
-              console.warn('Video autoplay was prevented:', error);
+              logDebug(`Autoplay prevented: ${error}`);
               // Add a user interaction hint if autoplay fails
               unmuteButton.textContent = 'Tap to Play';
               unmuteButton.style.display = 'block';
             });
           }
         } else {
-          console.log('Video not ready yet, waiting for canplay event');
+          logDebug(`Video not ready yet (readyState: ${video.readyState}), waiting for canplay`);
           // Try again when video can play
           video.addEventListener('canplay', () => {
-            console.log('Video can now play, attempting playback');
+            logDebug('Video can now play via canplay event');
             playMedia();
           }, { once: true });
           
           // Set a timeout in case canplay never fires
           setTimeout(() => {
             if (video.readyState < 2) {
-              console.warn('Video still not ready after timeout, continuing anyway');
+              logDebug(`Video still not ready after timeout (readyState: ${video.readyState})`);
               resolve();
             }
           }, 5000);
@@ -170,13 +229,14 @@ export default function NewScannerPage() {
       
       // Listen for canplay event to start playing
       video.addEventListener('canplay', () => {
+        logDebug('Video canplay event fired');
         playMedia();
       }, { once: true });
       
       // Set a timeout to ensure we don't wait forever
       setTimeout(() => {
         if (video.readyState < 2) {
-          console.warn('Video not ready after timeout, continuing anyway');
+          logDebug(`Timeout reached, video readyState: ${video.readyState}`);
           resolve();
         }
       }, 8000);
@@ -208,8 +268,21 @@ export default function NewScannerPage() {
   useEffect(() => {
     // This code runs after the component mounts and all scripts load
     if (typeof window !== 'undefined') {
+      // Log device info for debugging
+      logDebug(`Device: ${navigator.userAgent}`);
+      
+      // Log video element support
+      try {
+        const testVideo = document.createElement('video');
+        logDebug(`Browser video support: ${!!testVideo.canPlayType}`);
+        logDebug(`MP4 support: ${testVideo.canPlayType('video/mp4')}`);
+      } catch (err) {
+        logDebug(`Error testing video support: ${err}`);
+      }
+      
       // Inject A-Frame HTML
       if (sceneContainerRef.current) {
+        logDebug('Initializing AR scene');
         const aframeHTML = `
           <a-scene
             mindar-image="imageTargetSrc: /targets.mind; uiLoading:#loadingAnimation; uiScanning:#scannerAnimation; autoStart: true"
@@ -234,6 +307,7 @@ export default function NewScannerPage() {
         `;
         
         sceneContainerRef.current.innerHTML = aframeHTML;
+        logDebug('AR scene initialized');
       }
       
       // Wait for a short delay to ensure scene is initialized
@@ -258,7 +332,7 @@ export default function NewScannerPage() {
           
           // Add error tracking for debugging
           video.addEventListener('error', (e) => {
-            console.error('Video error in attemptPlay:', video.error?.code, video.error?.message);
+            logDebug(`Animation video error: ${video.error?.code || 'unknown'} - ${video.error?.message || 'No message'}`);
           });
           
           // Function that checks readyState and attempts to play
@@ -267,14 +341,14 @@ export default function NewScannerPage() {
               const playPromise = video.play();
               if (playPromise !== undefined) {
                 playPromise.then(() => {
-                  console.log('Animation video started playing');
+                  logDebug(`Animation video ID=${video.id} started playing`);
                 }).catch(error => {
-                  console.warn('Animation autoplay was prevented:', error);
+                  logDebug(`Animation autoplay prevented for ${video.id}: ${error}`);
                   
                   // Retry after user interaction
                   const handleUserInteraction = () => {
                     video.play().catch(err => {
-                      console.error('Failed to play after user interaction:', err);
+                      logDebug(`Failed to play ${video.id} after user interaction: ${err}`);
                     });
                     
                     // Remove event listeners after attempt
@@ -294,8 +368,8 @@ export default function NewScannerPage() {
               // Set a timeout to retry anyway
               setTimeout(() => {
                 if (video.readyState < 2) {
-                  console.warn('Video still not ready, trying anyway');
-                  video.play().catch(e => console.warn('Play attempt failed:', e));
+                  logDebug(`${video.id} still not ready (readyState: ${video.readyState}), trying anyway`);
+                  video.play().catch(e => logDebug(`Play attempt failed for ${video.id}: ${e}`));
                 }
               }, 3000);
             }
@@ -361,6 +435,29 @@ export default function NewScannerPage() {
           <img src="https://res.cloudinary.com/dawyrpt2m/image/upload/v1743421018/Screenshot_2025-03-31_143549_dwhfs4.png" alt="Loading" className="max-w-full max-h-full" />
         </div>
       )}
+      
+      {/* Mobile debug overlay */}
+      {showDebug && (
+        <div className="fixed top-0 left-0 w-full bg-black bg-opacity-80 text-white p-4 z-[9999] text-xs overflow-auto" style={{ maxHeight: '60vh' }}>
+          <h3 className="text-sm font-bold mb-2">Debug Info:</h3>
+          <ul>
+            {debugInfo.map((msg, i) => (
+              <li key={i} className="my-1 border-b border-gray-700 pb-1">{msg}</li>
+            ))}
+          </ul>
+          <div className="mt-2">
+            <span className="text-xs text-gray-400">Device: {navigator.userAgent}</span>
+          </div>
+        </div>
+      )}
+      
+      {/* Debug toggle button */}
+      <button 
+        onClick={() => setShowDebug(!showDebug)} 
+        className="fixed bottom-4 right-4 bg-gray-800 text-white p-2 rounded-full w-10 h-10 flex items-center justify-center z-[9999] opacity-50 hover:opacity-100"
+      >
+        {showDebug ? 'X' : 'D'}
+      </button>
       
       <div ref={sceneContainerRef} id="scene-container" className="ar-scene-container"></div>
     </>
