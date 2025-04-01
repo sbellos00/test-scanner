@@ -35,17 +35,30 @@ export default function NewScannerPage() {
       const preloadImage = new Image();
       preloadImage.src = 'https://res.cloudinary.com/dawyrpt2m/image/upload/v1743421018/Screenshot_2025-03-31_143549_dwhfs4.png';
       
-      // Create modal container
+      // Create modal container with transparent background first
       const modal = document.createElement('div');
-      modal.className = 'fixed top-0 left-0 w-full h-full flex items-center justify-center bg-black z-50';
+      modal.className = 'fixed top-0 left-0 w-full h-full flex items-center justify-center z-50';
       
-      // Create video element
+      // Create video element with modified CSS classes
       const video = document.createElement('video');
-      video.className = 'w-full h-full object-contain relative z-10';
-      video.src = videoUrl;
-      video.controls = false;
+      video.className = 'w-full h-full relative z-10'; // Removed object-contain
       video.muted = true; // Keep video muted for autoplay
       video.playsInline = true;
+      video.playbackRate = 1.0; // Ensure playback rate is standard
+      
+      // Add an explicit poster for video
+      video.poster = preloadImage.src;
+      
+      // Add debugging for video
+      video.addEventListener('loadedmetadata', () => {
+        console.log('Video metadata loaded, dimensions:', video.videoWidth, 'x', video.videoHeight);
+      });
+      
+      video.addEventListener('error', (e) => {
+        console.error('Video error:', video.error?.code, video.error?.message);
+        // If video fails, continue with redirect
+        resolve();
+      });
       
       // Create unmute button (defined early so it can be referenced in handlers)
       const unmuteButton = document.createElement('button');
@@ -100,33 +113,73 @@ export default function NewScannerPage() {
         resolve();
       };
       
-      // Add elements to DOM
-      modal.appendChild(video);
+      // Add elements to DOM: Add modal first
       document.body.appendChild(modal);
       
-      // Add button click handler and append to modal
-      unmuteButton.onclick = (e) => {
-        e.stopPropagation();
-        unmuteVideo();
-      };
-      modal.appendChild(unmuteButton);
+      // Add a small delay before adding video to ensure DOM is ready
+      setTimeout(() => {
+        // Set the black background after a small delay to ensure video renders first
+        modal.style.backgroundColor = 'black';
+        
+        // Add video to modal
+        modal.appendChild(video);
+        
+        // Add button click handler and append to modal
+        unmuteButton.onclick = (e) => {
+          e.stopPropagation();
+          unmuteVideo();
+        };
+        modal.appendChild(unmuteButton);
+        
+        // Set video source after adding to DOM
+        video.src = videoUrl;
+      }, 50);
       
-      // Force play video with retry
+      // Enhanced playMedia function with readyState checks
       const playMedia = () => {
-        // Play video
-        const videoPromise = video.play();
-        if (videoPromise !== undefined) {
-          videoPromise.then(() => {
-            console.log('Intro video started playing');
-          }).catch(error => {
-            console.warn('Video autoplay was prevented:', error);
-            // Retry after a short delay
-            setTimeout(playMedia, 1000);
-          });
+        if (video.readyState >= 2) { // HAVE_CURRENT_DATA = 2
+          // Play video
+          const videoPromise = video.play();
+          if (videoPromise !== undefined) {
+            videoPromise.then(() => {
+              console.log('Intro video started playing successfully');
+            }).catch(error => {
+              console.warn('Video autoplay was prevented:', error);
+              // Add a user interaction hint if autoplay fails
+              unmuteButton.textContent = 'Tap to Play';
+              unmuteButton.style.display = 'block';
+            });
+          }
+        } else {
+          console.log('Video not ready yet, waiting for canplay event');
+          // Try again when video can play
+          video.addEventListener('canplay', () => {
+            console.log('Video can now play, attempting playback');
+            playMedia();
+          }, { once: true });
+          
+          // Set a timeout in case canplay never fires
+          setTimeout(() => {
+            if (video.readyState < 2) {
+              console.warn('Video still not ready after timeout, continuing anyway');
+              resolve();
+            }
+          }, 5000);
         }
       };
       
-      playMedia();
+      // Listen for canplay event to start playing
+      video.addEventListener('canplay', () => {
+        playMedia();
+      }, { once: true });
+      
+      // Set a timeout to ensure we don't wait forever
+      setTimeout(() => {
+        if (video.readyState < 2) {
+          console.warn('Video not ready after timeout, continuing anyway');
+          resolve();
+        }
+      }, 8000);
     });
   };
   
@@ -199,17 +252,60 @@ export default function NewScannerPage() {
           }
         });
         
-        // Attempt to play videos for animations
+        // Attempt to play videos for animations with improved error handling
         const attemptPlay = (video: HTMLVideoElement) => {
           if (!video) return;
           
-          const playPromise = video.play();
-          if (playPromise !== undefined) {
-            playPromise.then(() => {
-              // Autoplay started
-            }).catch(error => {
-              console.warn('Autoplay was prevented. Attempting to play the video manually.', error);
-            });
+          // Add error tracking for debugging
+          video.addEventListener('error', (e) => {
+            console.error('Video error in attemptPlay:', video.error?.code, video.error?.message);
+          });
+          
+          // Function that checks readyState and attempts to play
+          const tryPlay = () => {
+            if (video.readyState >= 2) { // HAVE_CURRENT_DATA = 2
+              const playPromise = video.play();
+              if (playPromise !== undefined) {
+                playPromise.then(() => {
+                  console.log('Animation video started playing');
+                }).catch(error => {
+                  console.warn('Animation autoplay was prevented:', error);
+                  
+                  // Retry after user interaction
+                  const handleUserInteraction = () => {
+                    video.play().catch(err => {
+                      console.error('Failed to play after user interaction:', err);
+                    });
+                    
+                    // Remove event listeners after attempt
+                    document.removeEventListener('click', handleUserInteraction);
+                    document.removeEventListener('touchstart', handleUserInteraction);
+                  };
+                  
+                  // Add listeners for user interaction
+                  document.addEventListener('click', handleUserInteraction, { once: true });
+                  document.addEventListener('touchstart', handleUserInteraction, { once: true });
+                });
+              }
+            } else {
+              // Wait for canplay event if not ready
+              video.addEventListener('canplay', tryPlay, { once: true });
+              
+              // Set a timeout to retry anyway
+              setTimeout(() => {
+                if (video.readyState < 2) {
+                  console.warn('Video still not ready, trying anyway');
+                  video.play().catch(e => console.warn('Play attempt failed:', e));
+                }
+              }, 3000);
+            }
+          };
+          
+          // Start the process
+          if (video.readyState >= 2) {
+            tryPlay();
+          } else {
+            video.addEventListener('canplay', tryPlay, { once: true });
           }
         };
         
@@ -230,14 +326,33 @@ export default function NewScannerPage() {
       <Script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js" strategy="beforeInteractive" />
       
       <div id="loadingAnimation" className="animation-container">
-        <video id="enterUtopiaVideo" autoPlay muted loop playsInline>
+        <video 
+          id="enterUtopiaVideo" 
+          autoPlay 
+          muted 
+          loop 
+          playsInline
+          style={{ objectFit: "fill", width: "100%", height: "100%" }}
+          preload="auto"
+          poster="https://res.cloudinary.com/dawyrpt2m/image/upload/v1743421018/Screenshot_2025-03-31_143549_dwhfs4.png"
+        >
           <source src="/gnxscannerloadingscreen.mp4" type="video/mp4" />
+          Your browser does not support the video tag.
         </video>
       </div>
       
       <div id="scannerAnimation" className="animation-container hidden">
-        <video id="portalScannerVideo" autoPlay muted loop playsInline>
+        <video 
+          id="portalScannerVideo" 
+          autoPlay 
+          muted 
+          loop 
+          playsInline
+          style={{ objectFit: "fill", width: "100%", height: "100%" }}
+          preload="auto"
+        >
           <source src="/portalScanner.mp4" type="video/mp4" />
+          Your browser does not support the video tag.
         </video>
       </div>
       
